@@ -71,6 +71,12 @@
   border-bottom: 1px solid var(--line);
 }
 
+/* The logo is a link home, not a link in running text: no underline. */
+.logo,
+.logo:hover {
+  text-decoration: none;
+}
+
 .nav__inner {
   display: flex;
   align-items: center;

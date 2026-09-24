@@ -10,6 +10,10 @@
  * It resolves at 16 px because it is three shapes: a rounded square, a dot, and
  * a stroke. The `compact` variant drops the rule, which is the first detail to
  * go muddy at favicon size.
+ *
+ * Colours are set with `style`, not `fill=""`/`stroke=""`: SVG presentation
+ * attributes do not resolve var(), and an invalid one silently inherits the
+ * root's fill="none", which made the whole mark invisible.
  */
 
 export interface LogoProps {
@@ -63,25 +67,25 @@ export function LogoMark({ size = 28, compact = false }: { size?: number; compac
       style={{ display: "block", flexShrink: 0 }}
     >
       {/* The card. Ink-filled, so the mark reads as a solid shape at any size. */}
-      <rect x="3" y="3" width="26" height="26" rx="7.5" fill="var(--logo-ink, #141719)" />
+      <rect x="3" y="3" width="26" height="26" rx="7.5" style={{ fill: "var(--logo-ink, #141719)" }} />
 
       {/* The preview/body divider, straight out of the result card. */}
       {!compact && (
         <path
           d="M3.6 12.6h24.8"
-          stroke="var(--logo-paper, #fbfbf8)"
+          style={{ stroke: "var(--logo-paper, #fbfbf8)" }}
           strokeOpacity="0.22"
           strokeWidth="1"
         />
       )}
 
       {/* The tittle — the only accent in the entire identity. */}
-      <circle cx="16" cy="8.4" r={compact ? 2.7 : 2.3} fill="var(--logo-signal, #0b6b5b)" />
+      <circle cx="16" cy="8.4" r={compact ? 2.7 : 2.3} style={{ fill: "var(--logo-signal, #0b6b5b)" }} />
 
       {/* The stem and its hook: the letter, and the gesture of going somewhere. */}
       <path
         d="M16 15.4v5.1c0 2.6-2.1 3.8-4 3.1"
-        stroke="var(--logo-paper, #fbfbf8)"
+        style={{ stroke: "var(--logo-paper, #fbfbf8)" }}
         strokeWidth="2.6"
         strokeLinecap="round"
       />

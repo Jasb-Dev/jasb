@@ -31,6 +31,15 @@
   --signal-soft: rgba(11, 107, 91, 0.1);
   --signal-line: rgba(11, 107, 91, 0.32);
 
+  /* --- Logo ------------------------------------------------------------- */
+  /* Derived, so the mark follows every theme switch without overrides of
+     its own: an ink card on light paper, a light card on dark paper. Set as
+     CSS properties on the SVG, never as fill="" attributes, which do not
+     resolve var(). */
+  --logo-ink: var(--ink);
+  --logo-paper: var(--paper-raised);
+  --logo-signal: var(--signal);
+
   /* --- Structure -------------------------------------------------------- */
   --line: rgba(20, 23, 25, 0.1);
   --line-strong: rgba(20, 23, 25, 0.2);
