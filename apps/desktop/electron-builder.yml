@@ -1,0 +1,54 @@
+# Packaging for the desktop browser.
+#
+#   pnpm --filter @jasb/desktop dist         # this machine's platform (scripts/package.sh)
+#   pnpm --filter @jasb/desktop dist:mac     # .dmg + .zip, Apple silicon and Intel
+#   pnpm --filter @jasb/desktop dist:win / dist:linux  (build on that OS: native module)
+#
+# Signing is automatic: with CSC_LINK / CSC_KEY_PASSWORD (and APPLE_ID,
+# APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID for notarisation) in the
+# environment the macOS build is signed and notarised; without them it is
+# unsigned. Gatekeeper blocks an unsigned download, so until the certificate
+# exists the release notes must say "right-click → Open" (see LAUNCH.md).
+
+appId: dev.jasb.browser
+productName: Jasb
+copyright: © 2026 Jasb
+
+directories:
+  output: release
+  buildResources: build
+
+files:
+  - dist/**
+  - package.json
+  - "!**/*.map"
+
+# better-sqlite3 loads a .node binary, which cannot be read from inside asar.
+asarUnpack:
+  - "**/*.node"
+
+mac:
+  category: public.app-category.productivity
+  target:
+    - target: dmg
+      arch: [arm64, x64]
+    - target: zip
+      arch: [arm64, x64]
+  artifactName: Jasb-${version}-mac-${arch}.${ext}
+  hardenedRuntime: true
+
+win:
+  target: nsis
+  artifactName: Jasb-${version}-windows-setup.${ext}
+
+nsis:
+  oneClick: true
+  perMachine: false
+
+linux:
+  target: [AppImage, deb]
+  category: Network
+  artifactName: Jasb-${version}-linux-${arch}.${ext}
+  maintainer: dev@jasb.dev
+
+publish: null

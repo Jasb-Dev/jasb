@@ -1,0 +1,35 @@
+[Unit]
+Description=Jasb API server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=jasb
+Group=jasb
+WorkingDirectory=/opt/jasb/current
+EnvironmentFile=/etc/jasb/jasb.env
+ExecStart=/usr/bin/node --experimental-strip-types --no-warnings=ExperimentalWarning src/node.ts
+Restart=always
+RestartSec=2
+
+# Quotas and caches live in memory. The only thing written to disk is the
+# Paddle entitlement store, in /var/lib/jasb (StateDirectory). Everything else
+# is read-only to this process.
+StateDirectory=jasb
+StateDirectoryMode=0750
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+LockPersonality=true
+MemoryMax=1G
+
+[Install]
+WantedBy=multi-user.target

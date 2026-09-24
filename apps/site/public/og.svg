@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <!-- Social card. Same paper ground, same one accent, no stock gradient. -->
+  <rect width="1200" height="630" fill="#f1f2ee"/>
+  <g transform="translate(96 150)">
+    <rect x="0" y="0" width="92" height="92" rx="26" fill="#141719"/>
+    <path d="M2 34h88" stroke="#fbfbf8" stroke-opacity=".22" stroke-width="3"/>
+    <circle cx="46" cy="22" r="8" fill="#0b6b5b"/>
+    <path d="M46 44v18c0 9-7.5 13.5-14 11" stroke="#fbfbf8" stroke-width="9" stroke-linecap="round" fill="none"/>
+  </g>
+  <text x="96" y="330" font-family="Iowan Old Style, Palatino, Georgia, serif" font-size="82" fill="#141719">
+    Type what you want.
+  </text>
+  <text x="96" y="416" font-family="Iowan Old Style, Palatino, Georgia, serif" font-size="82" font-style="italic" fill="#0b6b5b">
+    Get the right sites.
+  </text>
+  <text x="96" y="486" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="26" fill="#6e6e76" letter-spacing="2">
+    NO CHAT · NO AGENTS · NO ADS
+  </text>
+  <text x="96" y="566" font-family="-apple-system, Segoe UI, Roboto, sans-serif" font-size="30" font-weight="600" fill="#141719">
+    jasb.dev
+  </text>
+</svg>

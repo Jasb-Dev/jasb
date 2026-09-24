@@ -1,0 +1,169 @@
+/*
+ * Desktop-only chrome.
+ *
+ * The tab strip is the one surface the web build has no equivalent for, so it
+ * lives here rather than in the shared component layer.
+ */
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  overflow: hidden; /* the grid scrolls inside <main>, the window never does */
+}
+
+.tabs {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-1);
+  height: 38px;
+  padding-inline: var(--space-2);
+  background: var(--paper-sunken);
+  border-bottom: 1px solid var(--line);
+  /* The strip itself is draggable like a native title bar; the controls inside
+     opt back out, or they would be un-clickable. */
+  -webkit-app-region: drag;
+  user-select: none;
+}
+
+/*
+ * Room for the macOS traffic lights, which sit inside our chrome because the
+ * title bar is hidden there. Keyed off a platform attribute the renderer
+ * stamps on <html> — a vendor-prefix media query would be guessing at the
+ * engine rather than asking about the OS.
+ */
+.tabs__gutter {
+  width: 0;
+  flex-shrink: 0;
+}
+
+:root[data-platform="mac"] .tabs__gutter {
+  width: 78px;
+}
+
+.tabs__home,
+.tabs__new,
+.tab {
+  -webkit-app-region: no-drag;
+}
+
+.tabs__home {
+  align-self: center;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--ink-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  transition: background var(--fast) var(--ease), color var(--fast) var(--ease);
+}
+
+.tabs__home:hover {
+  background: var(--paper-raised);
+  color: var(--ink);
+}
+
+.tabs__home[aria-pressed="true"] {
+  background: var(--signal-soft);
+  color: var(--signal);
+}
+
+.tabs__list {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-1);
+  flex: 1;
+  min-width: 0;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  align-self: center;
+  max-width: 220px;
+  min-width: 0;
+  border-radius: var(--radius-sm);
+  transition: background var(--fast) var(--ease);
+}
+
+.tab:hover {
+  background: var(--paper-raised);
+}
+
+.tab--active {
+  background: var(--paper-raised);
+  box-shadow: inset 0 -2px 0 var(--signal);
+}
+
+.tab__select {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-1) var(--space-2);
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+}
+
+.tab--active .tab__select {
+  color: var(--ink);
+}
+
+.tab__favicon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  border-radius: 2px;
+}
+
+.tab__favicon--blank {
+  background: var(--line-strong);
+}
+
+.tab__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The live tracker count. Measured on this page load, not looked up. */
+.tab__trackers {
+  flex-shrink: 0;
+  padding: 0 4px;
+  border-radius: 2px;
+  background: var(--warn-soft);
+  color: var(--warn);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.tab__close {
+  padding: 0 var(--space-2);
+  color: var(--ink-3);
+  font-size: var(--text-base);
+  line-height: 1;
+}
+
+.tab__close:hover {
+  color: var(--ink);
+}
+
+.tabs__new {
+  align-self: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-sm);
+  color: var(--ink-2);
+  font-size: var(--text-lg);
+  line-height: 1;
+}
+
+.tabs__new:hover {
+  background: var(--paper-raised);
+  color: var(--ink);
+}

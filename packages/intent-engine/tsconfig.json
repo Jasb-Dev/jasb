@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    // Source imports carry `.ts` extensions so `node --test --experimental-strip-types`
+    // can run the tree directly, with no build step between an edit and a test run.
+    // `rewriteRelativeImportExtensions` turns them into `.js` on emit, so the published
+    // package is still standards-compliant ESM.
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true
+  },
+  "include": ["src/**/*.ts"]
+}

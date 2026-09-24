@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Jasb — Just a Browser</title>
+    <meta
+      name="description"
+      content="Type what you want, get the right sites. A browser that uses AI to route you to the web instead of replacing it. No chat, no agents, no ads."
+    />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="canonical" href="https://jasb.dev/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://jasb.dev/" />
+    <meta property="og:title" content="Jasb — Just a Browser" />
+    <meta
+      property="og:description"
+      content="Type what you want, get the right sites. No chat, no agents, no ads."
+    />
+    <meta property="og:image" content="https://jasb.dev/og.svg" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <script type="module" src="/src/main.js"></script>
+  </head>
+
+  <body>
+    <!-- ================================================================== -->
+    <!-- Navigation                                                         -->
+    <!-- ================================================================== -->
+    <header class="nav">
+      <div class="wrap nav__inner">
+        <a href="/" class="logo" aria-label="Jasb home">
+          <svg width="26" height="26" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+            <rect x="3" y="3" width="26" height="26" rx="7.5" fill="var(--logo-ink)" />
+            <path d="M3.6 12.6h24.8" stroke="var(--logo-paper)" stroke-opacity="0.22" stroke-width="1" />
+            <circle cx="16" cy="8.4" r="2.3" fill="var(--logo-signal)" />
+            <path
+              d="M16 15.4v5.1c0 2.6-2.1 3.8-4 3.1"
+              stroke="var(--logo-paper)"
+              stroke-width="2.6"
+              stroke-linecap="round"
+            />
+          </svg>
+          <span class="logo__text">
+            <span class="logo__word" style="font-size: 19px">jasb</span>
+          </span>
+        </a>
+
+        <ul class="nav__links">
+          <li><a class="nav__link" href="#how">How it works</a></li>
+          <li><a class="nav__link" href="#refuses">What it refuses</a></li>
+          <li><a class="nav__link" href="#pricing">Pricing</a></li>
+          <li><a class="nav__link" href="#faq">FAQ</a></li>
+          <li>
+            <a class="nav__link" href="https://github.com/jasb-dev/jasb" rel="noopener">GitHub</a>
+          </li>
+          <li class="nav__cta"><a class="btn btn--primary btn--small" href="#try">Try it</a></li>
+        </ul>
+      </div>
+    </header>
+
+    <main>
+      <!-- ================================================================ -->
+      <!-- Hero — the thesis, then proof of it in the same screen           -->
+      <!-- ================================================================ -->
+      <section class="wrap hero" id="try">
+        <h1 class="hero__headline">
+          Type what you want.<br />
+          Get the <em>right sites</em>.
+        </h1>
+
+        <p class="hero__lede">
+          Every other AI browser answers for you. Jasb doesn't. It reads what you meant,
+          finds the handful of pages that actually serve it, and gets out of the way — so
+          you end up on the web instead of reading a summary of it.
+        </p>
+
+        <div class="hero__actions">
+          <a class="btn btn--primary" href="#demo-input">Try it right here</a>
+          <a class="btn btn--ghost" href="#get">Get the browser</a>
+        </div>
+
+        <p class="hero__meta">
+          <span>No account</span>
+          <span>No ads, ever</span>
+          <span>Open source, MIT</span>
+          <span>History stays on your device</span>
+        </p>
+
+        <!-- The demo. Real results from the real engine, five a day, no key. -->
+        <div class="demo" id="demo">
+          <form class="demo__bar" id="demo-form" role="search">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="1.6" stroke-linecap="round" aria-hidden="true"
+                 style="color: var(--ink-3); flex-shrink: 0">
+              <circle cx="11" cy="11" r="6.5" />
+              <path d="M16 16l4.5 4.5" />
+            </svg>
+            <label class="visually-hidden" for="demo-input">What are you looking for?</label>
+            <input
+              class="demo__input"
+              id="demo-input"
+              type="text"
+              placeholder="how do noise cancelling headphones work"
+              autocomplete="off"
+              spellcheck="false"
+              enterkeyhint="go"
+            />
+            <button class="btn btn--primary btn--small" type="submit">Search</button>
+          </form>
+
+          <div class="demo__body">
+            <div class="demo__hint" id="demo-hint">
+              <span>Try:</span>
+              <button class="demo__chip" type="button" data-q="how do tardigrades survive vacuum">
+                how do tardigrades survive vacuum
+              </button>
+              <button class="demo__chip" type="button" data-q="rust borrow checker cannot borrow as mutable">
+                a rust error message
+              </button>
+              <button class="demo__chip" type="button" data-q="no knead sourdough bread">
+                no knead sourdough bread
+              </button>
+            </div>
+            <ul class="demo__grid" id="demo-grid" hidden></ul>
+            <p class="demo__status" id="demo-status"></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================ -->
+      <!-- Ecosystem                                                        -->
+      <!-- ================================================================ -->
+      <section class="wrap section" id="get">
+        <span class="section__eyebrow">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="1.6" aria-hidden="true">
+            <rect x="3" y="4.5" width="5.5" height="6" rx="1.2" />
+            <rect x="9.25" y="4.5" width="5.5" height="6" rx="1.2" />
+            <rect x="15.5" y="4.5" width="5.5" height="6" rx="1.2" />
+            <rect x="3" y="13.5" width="5.5" height="6" rx="1.2" />
+            <rect x="9.25" y="13.5" width="5.5" height="6" rx="1.2" />
+            <rect x="15.5" y="13.5" width="5.5" height="6" rx="1.2" />
+          </svg>
+          Three ways in
+        </span>
+        <h2 class="section__title">One engine. Pick the shell that fits your week.</h2>
+        <p class="section__lede">
+          The ranking logic is one package, so every one of these returns the identical grid
+          for the identical query. What differs is how much of the browser you want us to be.
+        </p>
+
+        <ul class="cards">
+          <li class="feature">
+            <svg class="feature__icon" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+              <rect x="2.5" y="4" width="19" height="14" rx="2" />
+              <path d="M2.5 8.5h19M6 21h12" />
+            </svg>
+            <h3 class="feature__title">Jasb Browser</h3>
+            <p class="feature__body">
+              The full thing: real tabs, your history in a local SQLite file, provider keys in
+              the system keychain, and a live count of the third-party hosts every page you
+              open contacts. macOS, Windows and Linux.
+            </p>
+            <!-- Until there is a download page, the latest GitHub release is it. -->
+            <a class="feature__link" href="https://github.com/jasb-dev/jasb/releases/latest" rel="noopener">Download →</a>
+          </li>
+
+          <li class="feature">
+            <svg class="feature__icon" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 3a9 9 0 0 1 7.8 4.5H12a4.5 4.5 0 0 0-4 6.6L4.2 7.5" />
+              <circle cx="12" cy="12" r="3.4" />
+            </svg>
+            <h3 class="feature__title">Jasb for Chrome</h3>
+            <p class="feature__body">
+              Keep the browser you have. The new tab becomes the intent bar, and typing
+              <strong>j</strong> then space in the address bar searches from anywhere — with your
+              own bookmarks and history mixed into the results, locally.
+            </p>
+            <!-- Swap for the Chrome Web Store listing once it is approved (LAUNCH.md §7). -->
+            <a class="feature__link" href="https://github.com/jasb-dev/jasb/releases/latest" rel="noopener">Add to Chrome →</a>
+          </li>
+
+          <li class="feature">
+            <svg class="feature__icon" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9S14.5 18.4 12 21c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z" />
+            </svg>
+            <h3 class="feature__title">Jasb on the web</h3>
+            <p class="feature__body">
+              Nothing to install. The box at the top of this page is the real product running
+              against the real engine — five searches a day, no account, no key.
+            </p>
+            <a class="feature__link" href="https://app.jasb.dev">Use it now →</a>
+          </li>
+        </ul>
+      </section>
+
+      <!-- ================================================================ -->
+      <!-- How it works — the pipeline, which is also the cost argument     -->
+      <!-- ================================================================ -->
+      <section class="wrap section" id="how">
+        <span class="section__eyebrow">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+            <path d="M4 18a8 8 0 1 1 16 0" /><path d="M12 18l4.5-4.5" />
+          </svg>
+          How it works
+        </span>
+        <h2 class="section__title">The order of these steps is the whole business model.</h2>
+        <p class="section__lede">
+          Most searches never reach a paid API at all. That is not an optimisation bolted on
+          afterwards — it is why a browser like this can exist without ads.
+        </p>
+
+        <ol class="steps">
+          <li class="step">
+            <span class="step__n">01</span>
+            <span class="step__name">Recognise a destination</span>
+            <span class="step__desc">
+              A URL, a bare domain, <code>localhost:3000</code>, or a bang like <code>!w</code> goes
+              straight there. No model runs.
+              <span class="step__cost">free</span>
+            </span>
+          </li>
+          <li class="step">
+            <span class="step__n">02</span>
+            <span class="step__name">Check the navigation index</span>
+            <span class="step__desc">
+              “figma sign in”, “irs login” — single-destination requests resolve from a local
+              brand map in about ten microseconds.
+              <span class="step__cost">free</span>
+            </span>
+          </li>
+          <li class="step">
+            <span class="step__n">03</span>
+            <span class="step__name">Check the cache</span>
+            <span class="step__desc">
+              Exact match first, then a semantic near-match that a decision model has to confirm
+              before anyone gets someone else's results.
+              <span class="step__cost">free</span>
+            </span>
+          </li>
+          <li class="step">
+            <span class="step__n">04</span>
+            <span class="step__name">Read the intent</span>
+            <span class="step__desc">
+              What kind of thing is this, and which sources suit it? One call, two typed
+              questions, answered with calibrated probabilities rather than prose.
+            </span>
+          </li>
+          <li class="step">
+            <span class="step__n">05</span>
+            <span class="step__name">Ask several indexes at once</span>
+            <span class="step__desc">
+              Brave for the open web, Wikipedia for reference, Marginalia for the small web,
+              your own SearxNG if you run one. A slow source is dropped, not waited on.
+            </span>
+          </li>
+          <li class="step">
+            <span class="step__n">06</span>
+            <span class="step__name">Measure quality</span>
+            <span class="step__desc">
+              Tracker load, page speed, paywalls — plus anything this device has learned from
+              pages you actually opened. Your block and pin rules apply last, locally.
+            </span>
+          </li>
+          <li class="step">
+            <span class="step__n">07</span>
+            <span class="step__name">Judge every candidate</span>
+            <span class="step__desc">
+              Relevance, spam probability and a label, for all twenty candidates in parallel.
+              Cheap enough to do on every single query.
+            </span>
+          </li>
+          <li class="step">
+            <span class="step__n">08</span>
+            <span class="step__name">Show six — or fewer</span>
+            <span class="step__desc">
+              When the judgements come back genuinely unsure, you get three cards and a note
+              saying so, instead of six with three of them padding.
+            </span>
+          </li>
+        </ol>
+      </section>
+
+      <!-- ================================================================ -->
+      <!-- What it refuses to do                                            -->
+      <!-- ================================================================ -->
+      <section class="wrap section" id="refuses">
+        <span class="section__eyebrow">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="1.6" aria-hidden="true">
+            <path d="M12 3l7 3v5.5c0 4.3-2.9 8.2-7 9.5-4.1-1.3-7-5.2-7-9.5V6l7-3z" />
+          </svg>
+          By design
+        </span>
+        <h2 class="section__title">The list of things it won't do is the product.</h2>
+        <p class="section__lede">
+          Every item here is something a competitor ships and we deliberately don't. None of
+          them is a roadmap gap.
+        </p>
+
+        <ul class="refuse">
+          <li class="refuse__row">
+            <span class="refuse__what">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="1.6" aria-hidden="true">
+                <circle cx="12" cy="12" r="8.5" /><path d="M6 6l12 12" />
+              </svg>
+              No chat, no written answer
+            </span>
+            <span class="refuse__why">
+              Someone already wrote the answer and put it on a page. Paraphrasing it costs you
+              the source, the nuance and the author — and costs them the visit.
+            </span>
+          </li>
+          <li class="refuse__row">
+            <span class="refuse__what">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="1.6" aria-hidden="true">
+                <circle cx="12" cy="12" r="8.5" /><path d="M6 6l12 12" />
+              </svg>
+              No agent clicking for you
+            </span>
+            <span class="refuse__why">
+              Page content is never fed to a model as instructions, so the prompt-injection
+              attacks that have leaked other AI browsers' inboxes and one-time codes have
+              nothing here to attack.
+            </span>
+          </li>
+          <li class="refuse__row">
+            <span class="refuse__what">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="1.6" aria-hidden="true">
+                <circle cx="12" cy="12" r="8.5" /><path d="M6 6l12 12" />
+              </svg>
+              No ads, no sponsored cards
+            </span>
+            <span class="refuse__why">
+              A ranking you can buy a place in is not a ranking. One sponsored card would make
+              every other card suspect.
+            </span>
+          </li>
+          <li class="refuse__row">
+            <span class="refuse__what">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="1.6" aria-hidden="true">
+                <circle cx="12" cy="12" r="8.5" /><path d="M6 6l12 12" />
+              </svg>
+              No account to get started
+            </span>
+            <span class="refuse__why">
+              The free tier runs on a random token your device makes up. We cannot tie searches
+              to a person because we never learn who the person is.
+            </span>
+          </li>
+          <li class="refuse__row">
+            <span class="refuse__what">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="1.6" aria-hidden="true">
+                <circle cx="12" cy="12" r="8.5" /><path d="M6 6l12 12" />
+              </svg>
+              No telemetry
+            </span>
+            <span class="refuse__why">
+              Not usage analytics, not crash reports. If something breaks, tell us — that is the
+              reporting channel.
+            </span>
+          </li>
+        </ul>
+      </section>
+
+      <!-- ================================================================ -->
+      <!-- The quality signal                                               -->
+      <!-- ================================================================ -->
+      <section class="wrap section">
+        <span class="section__eyebrow">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+            <path d="M4 18a8 8 0 1 1 16 0" /><path d="M12 18l4.5-4.5" />
+          </svg>
+          The unfair advantage
+        </span>
+        <h2 class="section__title">A browser can measure what a crawler has to guess.</h2>
+        <p class="section__lede">
+          Ranking by page quality normally means crawling the web and estimating. We are already
+          in the browser: the moment you open a page we know how many third-party hosts it
+          contacted, how long it took, whether it hid behind a wall, and whether you bounced
+          within three seconds.
+        </p>
+        <p class="section__lede">
+          That evidence lands in a database on your own machine and improves <em>your</em> ranking
+          first. It is never uploaded. Sharing it in aggregate would need your explicit
+          permission and a k-anonymity threshold — and it isn't built yet, so it isn't claimed.
+        </p>
+      </section>
+
+      <!-- ================================================================ -->
+      <!-- Pricing                                                          -->
+      <!-- ================================================================ -->
+      <section class="wrap section" id="pricing">
+        <span class="section__eyebrow">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+            <rect x="4.5" y="10.5" width="15" height="10" rx="2" />
+            <path d="M8 10.5V7a4 4 0 0 1 8 0v3.5" />
+          </svg>
+          Pricing
+        </span>
+        <h2 class="section__title">One low price, or none at all if you bring your own keys.</h2>
+        <p class="section__lede">
+          An uncached search costs us about half a cent, almost all of it the search API rather
+          than the model. The pricing just reflects that.
+        </p>
+
+        <ul class="plans">
+          <li class="plan">
+            <span class="plan__name">Bring your own keys</span>
+            <span class="plan__price">Free <span>forever</span></span>
+            <ul class="plan__list">
+              <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg> Unlimited searches</li>
+              <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg> Your keys, your providers</li>
+              <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg> Ollama and SearxNG supported</li>
+              <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg> Nothing passes through us</li>
+            </ul>
+            <span class="plan__foot">
+              <a class="btn btn--ghost btn--small" href="https://github.com/jasb-dev/jasb" rel="noopener">Get the source</a>
+            </span>
+          </li>
+
+          <li class="plan">
+            <span class="plan__name">Free</span>
+            <span class="plan__price">$0 <span>/ month</span></span>
+            <ul class="plan__list">
+              <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg> 15 AI searches a day</li>
+              <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg> Unlimited URLs and bangs</li>
+              <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg> No account needed</li>
+            </ul>
+            <span class="plan__foot">
+              <a class="btn btn--ghost btn--small" href="#demo-input">Start here</a>
+            </span>
+          </li>
+
+          <li class="plan plan--featured">
+            <span class="plan__name">Pro</span>
+            <span class="plan__price">$5 <span>/ month</span></span>
+            <ul class="plan__list">
+              <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg> Unlimited, within fair use</li>
+              <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg> The better decision model</li>
+              <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg> Multi-source results</li>
+              <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg> Sync across devices, when it ships</li>
+            </ul>
+            <span class="plan__foot">
+              <a class="btn btn--primary btn--small" href="mailto:contact@jasb.dev?subject=Jasb%20Pro" data-plan="pro">Join the waitlist</a>
+            </span>
+          </li>
+
+          <li class="plan">
+            <span class="plan__name">Supporter</span>
+            <span class="plan__price">$19 <span>once</span></span>
+            <ul class="plan__list">
+              <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg> For people on their own keys</li>
+              <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg> Early builds</li>
+              <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg> One payment, no subscription</li>
+            </ul>
+            <span class="plan__foot">
+              <a class="btn btn--ghost btn--small" href="mailto:contact@jasb.dev?subject=Jasb%20Supporter" data-plan="supporter">Get in touch</a>
+            </span>
+          </li>
+        </ul>
+
+        <p class="plan__note" id="plan-note">
+          Paid plans are not open yet. When they are, payments run through
+          <strong>Paddle</strong> as merchant of record, so they handle tax and invoicing and we
+          never see a card number.
+        </p>
+      </section>
+
+      <!-- ================================================================ -->
+      <!-- FAQ                                                              -->
+      <!-- ================================================================ -->
+      <section class="wrap section" id="faq">
+        <span class="section__eyebrow">Questions</span>
+        <h2 class="section__title">The ones worth asking.</h2>
+
+        <div class="faq">
+          <details class="faq__item">
+            <summary class="faq__q">
+              Isn't this just a search engine with extra steps?
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+            </summary>
+            <p class="faq__a">
+              It's a browser where the address bar understands sentences. A search engine gives
+              you a page of ten blue links with ads on top and asks you to evaluate them. Jasb
+              gives you six sites, each labelled with what kind of page it is, ranked partly by
+              measurements taken in your own browser. And when you type a URL, nothing runs at all.
+            </p>
+          </details>
+
+          <details class="faq__item">
+            <summary class="faq__q">
+              Why would I pay for this when Google is free?
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+            </summary>
+            <p class="faq__a">
+              Google isn't free — it's paid for by the ads at the top of every result and by
+              what it learns about you. If that trade suits you, it's a genuinely good deal and
+              you should keep taking it. Jasb is for people who would rather pay five dollars
+              and have neither. And if you'd rather pay nothing, bring your own API keys: that
+              tier is free forever and we never see the traffic.
+            </p>
+          </details>
+
+          <details class="faq__item">
+            <summary class="faq__q">
+              What do you actually store?
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+            </summary>
+            <p class="faq__a">
+              On our server: a hash of the query mapped to the resulting list of sites, and only
+              once at least three separate devices have asked for that query. No IP addresses,
+              no query text, no account. On your device: history, favourites, your block and pin
+              rules, and the page measurements — all in one file you can erase with one button.
+              The <a href="/privacy.html">privacy policy</a> spells it out.
+            </p>
+          </details>
+
+          <details class="faq__item">
+            <summary class="faq__q">
+              What happens if your servers go away?
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+            </summary>
+            <p class="faq__a">
+              The desktop app runs the whole engine locally. Point it at your own keys — or at a
+              self-hosted SearxNG and an open decision model — and it never needs us. The source
+              is MIT-licensed, so that stays true whatever happens to the company.
+            </p>
+          </details>
+
+          <details class="faq__item">
+            <summary class="faq__q">
+              Which AI model is this, and can I run it myself?
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+            </summary>
+            <p class="faq__a">
+              Mostly not a chat model at all. The work is selection and scoring, which is what
+              “System One” decision models do — they return calibrated probabilities instead of
+              text. We use the open Apache-2.0 ones (Kev, CLM, Von, Decider), all of which you
+              can run on your own hardware, and fall back to an ordinary LLM through your own
+              key when you'd rather. Jev, the closed hosted one that defined the format, is
+              supported but is not the default.
+            </p>
+          </details>
+
+          <details class="faq__item">
+            <summary class="faq__q">
+              Is it any good? Honestly.
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+            </summary>
+            <p class="faq__a">
+              Try the box at the top and judge for yourself — that is the real engine, not a
+              recording. There's also a blind comparison tool in the repository: a hundred real
+              queries, our six results against a competitor's first six, sides shuffled and
+              unlabelled until you've graded every one. We built it to find out whether this was
+              worth shipping, and we'd rather you ran it than took our word.
+            </p>
+          </details>
+        </div>
+      </section>
+
+      <!-- ================================================================ -->
+      <!-- Final CTA                                                        -->
+      <!-- ================================================================ -->
+      <section class="wrap section">
+        <h2 class="section__title" style="max-width: 18ch">
+          The web is still out there. Go and read it.
+        </h2>
+        <div class="hero__actions">
+          <a class="btn btn--primary" href="#demo-input">Try it right here</a>
+          <a class="btn btn--ghost" href="https://github.com/jasb-dev/jasb" rel="noopener">Read the source</a>
+        </div>
+      </section>
+    </main>
+
+    <!-- ================================================================== -->
+    <!-- Footer                                                             -->
+    <!-- ================================================================== -->
+    <footer class="footer">
+      <div class="wrap">
+        <div class="footer__cols">
+          <div>
+            <a href="/" class="logo" aria-label="Jasb home">
+              <svg width="24" height="24" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+                <rect x="3" y="3" width="26" height="26" rx="7.5" fill="var(--logo-ink)" />
+                <circle cx="16" cy="8.4" r="2.7" fill="var(--logo-signal)" />
+                <path d="M16 15.4v5.1c0 2.6-2.1 3.8-4 3.1" stroke="var(--logo-paper)" stroke-width="2.6" stroke-linecap="round" />
+              </svg>
+              <span class="logo__text">
+                <span class="logo__word" style="font-size: 17px">jasb</span>
+                <span class="logo__tagline">just a browser</span>
+              </span>
+            </a>
+            <p class="footer__about">
+              A browser that uses AI to route you to the web instead of replacing it.
+              Open source, MIT licensed.
+            </p>
+          </div>
+
+          <div class="footer__group">
+            <h3>Product</h3>
+            <ul>
+              <li><a href="#get">Browser</a></li>
+              <li><a href="#get">Chrome extension</a></li>
+              <li><a href="#demo-input">Try on the web</a></li>
+              <li><a href="#pricing">Pricing</a></li>
+            </ul>
+          </div>
+
+          <div class="footer__group">
+            <h3>Learn</h3>
+            <ul>
+              <li><a href="#how">How it works</a></li>
+              <li><a href="#refuses">What it refuses</a></li>
+              <li><a href="#faq">FAQ</a></li>
+              <li><a href="https://github.com/jasb-dev/jasb" rel="noopener">Source code</a></li>
+            </ul>
+          </div>
+
+          <div class="footer__group">
+            <h3>Company</h3>
+            <ul>
+              <li><a href="mailto:contact@jasb.dev">contact@jasb.dev</a></li>
+              <li><a href="mailto:dev@jasb.dev">dev@jasb.dev</a></li>
+              <li><a href="/privacy.html">Privacy</a></li>
+              <li><a href="/terms.html">Terms</a></li>
+              <li><a href="/refund.html">Refunds</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="footer__base">
+          <span>© 2026 Jasb</span>
+          <span>No ads · No agents · No telemetry</span>
+          <span>Results via Brave Search, Wikipedia and Marginalia</span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

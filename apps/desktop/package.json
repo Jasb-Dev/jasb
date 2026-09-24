@@ -1,0 +1,43 @@
+{
+  "name": "@jasb/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Electron shell: real tabs, local SQLite, OS keychain, and tracker measurement.",
+  "type": "module",
+  "main": "dist/main/index.js",
+  "scripts": {
+    "dev": "pnpm run rebuild && pnpm run build && electron .",
+    "build": "tsc -p tsconfig.main.json && vite build",
+    "typecheck": "tsc -p tsconfig.main.json --noEmit && tsc -p tsconfig.renderer.json --noEmit",
+    "test": "echo \"no unit tests: ranking is covered in @jasb/intent-engine\"",
+    "rebuild": "electron-rebuild -f -w better-sqlite3",
+    "dist": "bash scripts/package.sh",
+    "dist:mac": "bash scripts/package.sh --mac",
+    "dist:win": "bash scripts/package.sh --win",
+    "dist:linux": "bash scripts/package.sh --linux"
+  },
+  "dependencies": {
+    "@jasb/intent-engine": "workspace:*",
+    "@jasb/ui": "workspace:*",
+    "better-sqlite3": "^11.7.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^3.7.1",
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/react": "^19.0.2",
+    "@types/react-dom": "^19.0.2",
+    "@vitejs/plugin-react": "^4.3.4",
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.5"
+  },
+  "productName": "Jasb",
+  "author": {
+    "name": "Jasb",
+    "email": "dev@jasb.dev"
+  },
+  "homepage": "https://jasb.dev"
+}

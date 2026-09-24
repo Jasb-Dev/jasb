@@ -1,0 +1,27 @@
+{
+  "name": "@jasb/web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The web client: intent bar, card grid, and the Phase 0 blind-test bench.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p tsconfig.json --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "echo \"no unit tests: covered by @jasb/intent-engine and @jasb/server\""
+  },
+  "dependencies": {
+    "@jasb/intent-engine": "workspace:*",
+    "@jasb/ui": "workspace:*",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.2",
+    "@types/react-dom": "^19.0.2",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.5"
+  }
+}

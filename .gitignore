@@ -1,0 +1,25 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.DS_Store
+
+# Local configuration — never commit a provider key
+.env
+.env.local
+
+# Electron / native build artefacts
+apps/desktop/dist/
+apps/extension/dist/
+build/Release/
+
+# Deploy build output
+deploy/.out/
+.state/
+apps/desktop/release/
+apps/desktop/.stage/
+
+# Local tooling and internal planning documents — not part of the public repo
+.claude/
+PLAN.md
+PLAN-2.md
+Just a Browser — *.md

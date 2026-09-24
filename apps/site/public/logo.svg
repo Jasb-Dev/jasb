@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 92 32" width="184" height="64" role="img" aria-label="Jasb">
+  <!--
+    The lockup: the mark from logo-mark.svg plus the wordmark, set the way
+    <Logo variant="full"/> sets it (weight 640, -0.035em tracking, 0.72 × mark
+    height). The wordmark is live text in the UI font stack, not outlines, so it
+    matches the product exactly wherever that font is present.
+    The ink follows the viewer's colour scheme; the mark itself never inverts.
+  -->
+  <style>
+    .word { fill: #141719; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif; font-weight: 640; letter-spacing: -0.035em; }
+    @media (prefers-color-scheme: dark) { .word { fill: #e8eae5; } }
+  </style>
+  <rect x="3" y="3" width="26" height="26" rx="7.5" fill="#141719"/>
+  <path d="M3.6 12.6h24.8" stroke="#fbfbf8" stroke-opacity=".22" stroke-width="1"/>
+  <circle cx="16" cy="8.4" r="2.3" fill="#0b6b5b"/>
+  <path d="M16 15.4v5.1c0 2.6-2.1 3.8-4 3.1" stroke="#fbfbf8" stroke-width="2.6" stroke-linecap="round" fill="none"/>
+  <text class="word" x="38" y="23.2" font-size="23">jasb</text>
+</svg>

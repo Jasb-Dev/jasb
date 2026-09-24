@@ -1,0 +1,27 @@
+{
+  "name": "@jasb/extension",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Manifest V3 extension: new-tab intent bar, omnibox keyword, Chrome bookmarks and history as sources.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite build --watch",
+    "build": "vite build",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "echo \"no unit tests: ranking is covered in @jasb/intent-engine\""
+  },
+  "dependencies": {
+    "@jasb/intent-engine": "workspace:*",
+    "@jasb/ui": "workspace:*",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.287",
+    "@types/react": "^19.0.2",
+    "@types/react-dom": "^19.0.2",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.5"
+  }
+}

@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Privacy — Jasb</title>
+    <meta
+      name="description"
+      content="What Jasb stores, what it refuses to store, and where your searches go."
+    />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <script type="module" src="/src/legal.js"></script>
+  </head>
+
+  <body>
+    <header class="nav">
+      <div class="wrap nav__inner">
+        <a href="/" class="logo" aria-label="Jasb home">
+          <svg width="26" height="26" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+            <rect x="3" y="3" width="26" height="26" rx="7.5" fill="var(--logo-ink)" />
+            <path d="M3.6 12.6h24.8" stroke="var(--logo-paper)" stroke-opacity="0.22" stroke-width="1" />
+            <circle cx="16" cy="8.4" r="2.3" fill="var(--logo-signal)" />
+            <path d="M16 15.4v5.1c0 2.6-2.1 3.8-4 3.1" stroke="var(--logo-paper)" stroke-width="2.6" stroke-linecap="round" />
+          </svg>
+          <span class="logo__text"><span class="logo__word" style="font-size: 19px">jasb</span></span>
+        </a>
+        <ul class="nav__links">
+          <li><a class="nav__link" href="/privacy.html">Privacy</a></li>
+          <li><a class="nav__link" href="/terms.html">Terms</a></li>
+          <li><a class="nav__link" href="/refund.html">Refunds</a></li>
+          <li class="nav__cta"><a class="btn btn--primary btn--small" href="/#try">Try it</a></li>
+        </ul>
+      </div>
+    </header>
+
+    <main class="wrap legal">
+      <h1>Privacy</h1>
+      <p class="legal__meta">Last updated 24 September 2026</p>
+
+      <div class="legal__summary">
+        <p>
+          <strong>The short version.</strong> We do not log your searches. We do not log IP
+          addresses. We do not require an account, run analytics, or ship telemetry — not even
+          crash reports. Your history, favourites and ranking rules never leave your device.
+        </p>
+        <p>
+          Everything below is the long version of those five sentences, including the places
+          where they need qualifying.
+        </p>
+      </div>
+
+      <h2>1. What we collect</h2>
+      <p>
+        <strong>An anonymous device token.</strong> Your browser or app generates a random
+        identifier the first time you search and sends it with each request. We store a hash of
+        it alongside a counter, so we can enforce the daily free allowance. It is not derived
+        from anything about you or your device, it is never linked to an email address, and
+        clearing your data replaces it with a new one.
+      </p>
+      <p>
+        <strong>Query hashes, under a threshold.</strong> To make repeated searches instant and
+        cheap, we cache the resulting list of sites against a hash of the normalised query. A
+        query is only written to that shared cache once at least three separate devices have
+        asked for it. A search only one person ever makes is not retained.
+      </p>
+      <p>
+        <strong>An email address, if you pay us.</strong> Paid plans need a way to identify your
+        subscription. Any working address is fine, including an alias from a forwarding service.
+      </p>
+
+      <h2>2. What we do not collect</h2>
+      <ul>
+        <li>
+          <strong>Search text tied to you.</strong> The server never writes query text to a log.
+          The logger used in production redacts query-shaped fields before anything reaches
+          standard output, so this is enforced in code rather than in policy.
+        </li>
+        <li><strong>IP addresses.</strong> They are not written to any log or database.</li>
+        <li>
+          <strong>Browsing history.</strong> Pages you open are known only to your own device.
+          The desktop app records page measurements in a local SQLite file; the extension reads
+          your Chrome bookmarks and history locally and sends neither anywhere.
+        </li>
+        <li><strong>Analytics or telemetry.</strong> There is no tracking script on this site and no usage reporting in any client.</li>
+        <li><strong>Crash reports.</strong> Not collected, not even optionally.</li>
+      </ul>
+
+      <h2>3. Where your searches actually go</h2>
+      <p>
+        This is the part most privacy policies leave vague, so here it is plainly. Which of
+        these applies depends on how you have Jasb configured.
+      </p>
+      <ul>
+        <li>
+          <strong>Default (our server).</strong> Your query goes to our proxy, which forwards it
+          — without your device token and without any identifier — to a search provider and a
+          decision model. Those providers see an anonymous query. We see a query we cannot
+          attribute to anyone.
+        </li>
+        <li>
+          <strong>Bring your own keys.</strong> Your query is forwarded straight to the
+          providers whose keys you supplied. Those providers see your requests and your IP
+          address, under their own terms, not ours. We do not store the keys.
+        </li>
+        <li>
+          <strong>Fully local.</strong> With a self-hosted SearxNG instance and a self-hosted
+          decision model, queries never leave your network at all.
+        </li>
+      </ul>
+
+      <h2>4. Where your keys are kept</h2>
+      <p>
+        The three clients differ, and the difference matters:
+      </p>
+      <ul>
+        <li><strong>Desktop app</strong> — encrypted by the operating system keychain, and never readable by the interface once saved.</li>
+        <li><strong>Chrome extension</strong> — ordinary extension storage, which is <em>not</em> encrypted. Anyone with access to your browser profile directory can read it. The settings screen says so where you enter the key.</li>
+        <li><strong>Web app</strong> — browser storage, also not encrypted, with the same warning shown in place.</li>
+      </ul>
+      <p>
+        If key safety matters to you, use the desktop app or our server-side default, where
+        there is no key of yours to protect.
+      </p>
+
+      <h2>5. Payments</h2>
+      <p>
+        Paid plans are processed by <strong>Paddle.com Market Ltd</strong>, acting as merchant
+        of record. Paddle collects and processes your payment details and billing information
+        directly; we never see or store a card number. Paddle's own privacy notice governs that
+        data, and they are the entity that appears on your statement and issues your invoice.
+      </p>
+      <p>
+        There is no Jasb account. When a payment clears, our server creates a licence key and
+        shows it to you once, on the page you return to after checkout. We keep a one-way hash
+        of that key, the plan, whether it is active, and Paddle's subscription id so a
+        cancellation can switch it off. We do not store your name, email address or country;
+        Paddle holds those for invoicing.
+      </p>
+      <p>
+        A licence key is sent with your searches so the server can apply your plan's allowance.
+        It is not stored alongside the query and is never written to a log. Until you pick it
+        up, the key waits on our server for at most seven days, and is then deleted.
+      </p>
+
+      <h2>6. Subprocessors</h2>
+      <p>
+        We keep this list short on purpose, and it is complete:
+      </p>
+      <ul>
+        <li><strong>Paddle</strong> — payments, invoicing and sales tax, for paid plans only.</li>
+        <li><strong>Search providers</strong> (Brave Search, Wikipedia, Marginalia) — receive the query text, with no identifier attached.</li>
+        <li><strong>Decision and language model providers</strong> — receive the query and short excerpts of candidate page titles and snippets, with no identifier attached. Where a provider offers a no-retention agreement, we take it.</li>
+        <li><strong>Our hosting provider</strong> — runs the proxy. It necessarily handles the network connection; it is configured not to retain request logs.</li>
+      </ul>
+
+      <h2>7. Retention</h2>
+      <ul>
+        <li><strong>Quota counters</strong> reset daily and hold nothing but a hash and a number.</li>
+        <li><strong>Shared cache entries</strong> expire on a schedule set by the kind of query: one hour for news, up to thirty days for a definition.</li>
+        <li><strong>Local data</strong> lives until you delete it. Every client has a single button that erases history, favourites, ranking rules, cached results, page measurements and stored keys, including the device token.</li>
+        <li><strong>Licence records</strong> (a key hash, a plan and a status) are kept while the licence exists. Email contact@jasb.dev to have yours deleted.</li>
+        <li><strong>Billing records</strong> are kept as long as tax law requires, by Paddle.</li>
+      </ul>
+
+      <h2>8. Cookies</h2>
+      <p>
+        This site sets no cookies and loads no third-party scripts, fonts or trackers. The demo
+        stores one random identifier in your browser's local storage so it can count your five
+        daily searches; clearing site data removes it.
+      </p>
+
+      <h2>9. Your rights</h2>
+      <p>
+        Because we hold so little, most requests resolve instantly: deleting your local data is
+        a button in the app and needs no involvement from us. For anything tied to a paid
+        account — access, correction, export or deletion — write to
+        <a href="mailto:contact@jasb.dev">contact@jasb.dev</a> and we will action it within 30
+        days.
+      </p>
+
+      <h2>10. Children</h2>
+      <p>
+        Jasb is not directed at children under 13 and we do not knowingly collect their data.
+        Since we do not collect personal data by default, there is in practice nothing to
+        collect.
+      </p>
+
+      <h2>11. Changes</h2>
+      <p>
+        If this policy changes in a way that affects what we collect, we will update the date
+        at the top and note the change in the release notes. The source of every claim on this
+        page is in the public repository, so you can check it rather than trust it.
+      </p>
+
+      <h2>12. Contact</h2>
+      <p>
+        Privacy questions and data requests: <a href="mailto:contact@jasb.dev">contact@jasb.dev</a><br />
+        Technical and security reports: <a href="mailto:dev@jasb.dev">dev@jasb.dev</a>
+      </p>
+    </main>
+
+    <footer class="footer">
+      <div class="wrap footer__base">
+        <span>© 2026 Jasb</span>
+        <span><a href="/" style="color: inherit">jasb.dev</a></span>
+        <span><a href="/terms.html" style="color: inherit">Terms</a></span>
+        <span><a href="/refund.html" style="color: inherit">Refunds</a></span>
+      </div>
+    </footer>
+  </body>
+</html>

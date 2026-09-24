@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # The desktop app's native SQLite binding and Electron runtime are not
+      # needed to typecheck or test, and downloading them would dominate CI.
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Build the engine
+        run: pnpm --filter @jasb/intent-engine build
+
+      - name: Typecheck
+        run: pnpm -r typecheck
+
+      - name: Test
+        run: pnpm -r test
+
+      - name: Build every client
+        run: pnpm --filter @jasb/web build && pnpm --filter @jasb/extension build && pnpm --filter @jasb/site build
+
+      # Ranking is the product. If a change alters which cards come back for the
+      # golden set, that should be a deliberate, reviewed decision — not a
+      # surprise discovered after launch.
+      - name: Golden-set parity
+        run: pnpm --filter @jasb/intent-engine test

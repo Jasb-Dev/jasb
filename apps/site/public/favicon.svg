@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!--
+    The Jasb mark, simplified for favicon size: the interior rule is the first
+    detail to go muddy at 16px, so it is dropped and the tittle is enlarged.
+    Colours are literal rather than variables — a favicon has no cascade.
+  -->
+  <rect width="32" height="32" rx="7.5" fill="#141719"/>
+  <circle cx="16" cy="9" r="3" fill="#0b6b5b"/>
+  <path d="M16 16v5.4c0 2.8-2.3 4-4.4 3.2" stroke="#fbfbf8" stroke-width="3" stroke-linecap="round" fill="none"/>
+</svg>

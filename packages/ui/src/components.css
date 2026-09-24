@@ -1,0 +1,961 @@
+/*
+ * Components.
+ *
+ * Naming is BEM-ish so specificity stays flat: one class per element, no
+ * descendant chains deeper than two, nothing that needs `!important` to undo.
+ */
+
+/* ===========================================================================
+   Intent bar
+   ===========================================================================
+   The address bar's replacement. Left-aligned rather than centred: a centred
+   search box is the visual cliché of "AI product", and the results below are
+   left-aligned anyway, so centring would break the reading column.
+   ------------------------------------------------------------------------- */
+
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  /* Opaque first: if `color-mix` is unsupported the declaration below is
+     dropped and the bar stays readable instead of going transparent over
+     scrolling content. */
+  background: var(--paper);
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: saturate(160%) blur(12px);
+  border-bottom: 1px solid var(--line);
+}
+
+.bar__inner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding-block: var(--space-3);
+}
+
+.bar__mark {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.bar__mark em {
+  font-style: italic;
+  color: var(--signal);
+}
+
+.bar__field {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  background: var(--paper-raised);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  padding: var(--space-2) var(--space-3);
+  transition:
+    border-color var(--fast) var(--ease),
+    box-shadow var(--fast) var(--ease);
+}
+
+.bar__field:focus-within {
+  border-color: var(--signal);
+  box-shadow: 0 0 0 3px var(--signal-soft);
+}
+
+/* The glyph inside the field. Dimmed until the field is focused, so it reads
+   as an affordance rather than as content. */
+.bar__icon {
+  flex-shrink: 0;
+  color: var(--ink-3);
+  transition: color var(--fast) var(--ease);
+}
+
+.bar__field:focus-within .bar__icon {
+  color: var(--signal);
+}
+
+.bar__input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  outline: none;
+  font-size: var(--text-base);
+  caret-color: var(--signal);
+}
+
+.bar__input::placeholder {
+  color: var(--ink-3);
+}
+
+/* Tells the user which path their input took — url, bang, index, search. */
+.bar__mode {
+  flex-shrink: 0;
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--signal-soft);
+  color: var(--signal);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.bar__hint {
+  flex-shrink: 0;
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+.bar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+
+.bar__button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--ink-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  transition: background var(--fast) var(--ease), color var(--fast) var(--ease);
+}
+
+.bar__button:hover {
+  background: var(--paper-sunken);
+  color: var(--ink);
+}
+
+.bar__button[aria-pressed="true"] {
+  color: var(--signal);
+  background: var(--signal-soft);
+}
+
+/* ===========================================================================
+   Status line — the honest bit
+   ===========================================================================
+   Reports where the answer came from and what it cost. A product whose whole
+   claim is "we do less" has to show its work.
+   ------------------------------------------------------------------------- */
+
+.status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  padding-block: var(--space-3);
+  border-bottom: 1px solid var(--line);
+  color: var(--ink-3);
+}
+
+.status__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.status__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--signal);
+}
+
+.status__dot--cached {
+  background: var(--ink-3);
+}
+
+.status__strong {
+  color: var(--ink-2);
+}
+
+/* ===========================================================================
+   Card grid
+   ===========================================================================
+   Four to eight results, never a scrolling page of ten blue links. `auto-fill`
+   with a floor of 260px keeps three columns on a laptop and one on a phone
+   without a single media query.
+   ------------------------------------------------------------------------- */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-4);
+  padding-block: var(--space-5) var(--space-7);
+  list-style: none;
+  margin: 0;
+}
+
+/* ===========================================================================
+   Card
+   ===========================================================================
+   A catalogue entry: preview band, title, why-this-site label, domain, and a
+   quality strip. The numbered badge is not decoration — it is the actual
+   keyboard shortcut that opens the card.
+   ------------------------------------------------------------------------- */
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  transition:
+    transform var(--normal) var(--ease),
+    box-shadow var(--normal) var(--ease),
+    border-color var(--normal) var(--ease);
+}
+
+.card:hover,
+.card:focus-within {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lift);
+  border-color: var(--line-strong);
+}
+
+.card--pinned {
+  border-color: var(--signal-line);
+}
+
+.card__link {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: 0 0 var(--space-4);
+  text-decoration: none;
+  color: inherit;
+  flex: 1;
+}
+
+.card__link::after {
+  /* Whole-card hit area without nesting interactive elements. */
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+/* Fixed aspect ratio so the grid never reflows when a thumbnail loads late. */
+.card__preview {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  background: var(--paper-sunken);
+  border-bottom: 1px solid var(--line);
+  overflow: hidden;
+}
+
+.card__thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* When there is no og:image, the domain itself becomes the artwork. */
+.card__fallback {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--ink-3);
+  text-align: center;
+  word-break: break-word;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 14px 14px;
+}
+
+.card__key {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  z-index: 2;
+  min-width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  padding-inline: 5px;
+  border-radius: var(--radius-sm);
+  background: var(--ink);
+  color: var(--paper-raised);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.card__badges {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  z-index: 2;
+  display: flex;
+  gap: var(--space-1);
+}
+
+.card__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-inline: var(--space-4);
+}
+
+.card__reason {
+  align-self: flex-start;
+  padding: 1px var(--space-2);
+  border: 1px solid var(--signal-line);
+  border-radius: var(--radius-sm);
+  color: var(--signal);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.card__title {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card__domain {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--ink-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  min-width: 0;
+}
+
+.card__favicon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  border-radius: 2px;
+}
+
+.card__domain-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Row of per-card controls. Sits above the card-wide hit area. */
+.card__tools {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  gap: var(--space-1);
+  padding: 0 var(--space-3) var(--space-3);
+  opacity: 0;
+  transition: opacity var(--fast) var(--ease);
+}
+
+.card:hover .card__tools,
+.card:focus-within .card__tools {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  /* Touch has no hover, so controls are always visible there. */
+  .card__tools {
+    opacity: 1;
+  }
+}
+
+.card__tool {
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  transition: background var(--fast) var(--ease), color var(--fast) var(--ease);
+}
+
+.card__tool:hover {
+  background: var(--paper-sunken);
+  color: var(--ink);
+}
+
+.card__tool[aria-pressed="true"] {
+  color: var(--signal);
+  background: var(--signal-soft);
+}
+
+/* ===========================================================================
+   Quality strip — the instrument
+   ===========================================================================
+   Tracker load rendered as ticks rather than a number alone, so a clean page
+   and an instrumented one are distinguishable at a glance without reading.
+   ------------------------------------------------------------------------- */
+
+.strip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-4);
+  color: var(--ink-3);
+}
+
+.strip__ticks {
+  display: flex;
+  gap: 2px;
+}
+
+.strip__tick {
+  width: 3px;
+  height: 9px;
+  border-radius: 1px;
+  background: var(--line-strong);
+}
+
+.strip__tick--on {
+  background: var(--warn);
+}
+
+.strip__tick--clean {
+  background: var(--signal);
+}
+
+.strip__text {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--paper-raised);
+  border: 1px solid var(--line-strong);
+  color: var(--ink-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.badge--signal {
+  border-color: var(--signal-line);
+  color: var(--signal);
+  background: var(--signal-soft);
+}
+
+.badge--warn {
+  border-color: transparent;
+  color: var(--warn);
+  background: var(--warn-soft);
+}
+
+/* ===========================================================================
+   Skeleton
+   ===========================================================================
+   Cards open as skeletons and fill in. Same box model as a real card, so
+   nothing moves when the content lands.
+   ------------------------------------------------------------------------- */
+
+.skeleton {
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.skeleton__preview {
+  aspect-ratio: 16 / 10;
+  background: var(--paper-sunken);
+  border-bottom: 1px solid var(--line);
+}
+
+.skeleton__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+}
+
+.skeleton__line {
+  height: 9px;
+  border-radius: 2px;
+  background: var(--paper-sunken);
+}
+
+.skeleton__line--short {
+  width: 38%;
+}
+
+.skeleton__line--medium {
+  width: 72%;
+}
+
+.skeleton__pulse {
+  animation: skeleton-pulse 1.6s var(--ease) infinite;
+}
+
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* ===========================================================================
+   Entrance
+   ===========================================================================
+   A short staggered rise. Reduced-motion users get the same layout instantly.
+   ------------------------------------------------------------------------- */
+
+.rise {
+  animation: rise var(--slow) var(--ease) both;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise {
+    animation: none;
+  }
+  .skeleton__pulse {
+    animation: none;
+  }
+}
+
+/* ===========================================================================
+   Empty state — the thesis
+   ===========================================================================
+   The one place the serif register appears at size. This is where the product
+   states what it is and, just as importantly, what it refuses to be.
+   ------------------------------------------------------------------------- */
+
+.empty {
+  padding-block: var(--space-8) var(--space-7);
+  max-width: var(--measure);
+}
+
+.empty__headline {
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+}
+
+.empty__headline em {
+  font-style: italic;
+  color: var(--signal);
+}
+
+.empty__sub {
+  margin-top: var(--space-4);
+  color: var(--ink-2);
+  max-width: 52ch;
+}
+
+.empty__list {
+  margin: var(--space-6) 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.empty__item {
+  display: grid;
+  grid-template-columns: minmax(0, 13rem) 1fr;
+  gap: var(--space-4);
+  align-items: baseline;
+  padding-block: var(--space-2);
+  border-top: 1px solid var(--line);
+}
+
+.empty__key {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--ink);
+}
+
+.empty__desc {
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+}
+
+@media (max-width: 34rem) {
+  .empty__item {
+    grid-template-columns: 1fr;
+    gap: var(--space-1);
+  }
+  .empty__headline {
+    font-size: var(--text-2xl);
+  }
+}
+
+/* ===========================================================================
+   Notice — errors and quota
+   ===========================================================================
+   States what went wrong and what to do about it. No apologies.
+   ------------------------------------------------------------------------- */
+
+.notice {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-block: var(--space-5);
+  padding: var(--space-4);
+  border: 1px solid var(--line-strong);
+  border-left: 3px solid var(--warn);
+  border-radius: var(--radius);
+  background: var(--paper-raised);
+}
+
+.notice__title {
+  font-weight: 600;
+  font-size: var(--text-sm);
+}
+
+.notice__body {
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+}
+
+.notice__action {
+  align-self: flex-start;
+  margin-top: var(--space-1);
+  color: var(--signal);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+/* ===========================================================================
+   Logo
+   ===========================================================================
+   The mark recolours with the theme through three variables rather than a
+   second asset, so there is exactly one drawing to keep in sync.
+   ------------------------------------------------------------------------- */
+
+:root {
+  --logo-ink: #141719;
+  --logo-paper: #fbfbf8;
+  --logo-signal: #0b6b5b;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --logo-ink: #edece8;
+    --logo-paper: #101012;
+    --logo-signal: #0f8e77;
+  }
+}
+
+:root[data-theme="dark"] {
+  --logo-ink: #edece8;
+  --logo-paper: #101012;
+  --logo-signal: #0f8e77;
+}
+
+:root[data-theme="light"] {
+  --logo-ink: #141719;
+  --logo-paper: #fbfbf8;
+  --logo-signal: #0b6b5b;
+}
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  user-select: none;
+}
+
+.logo__text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+}
+
+.logo__word {
+  font-family: var(--font-ui);
+  font-weight: 640;
+  letter-spacing: -0.035em;
+  color: var(--ink);
+}
+
+.logo__tagline {
+  margin-top: 3px;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* ===========================================================================
+   Icon buttons
+   ===========================================================================
+   A square tap target with the glyph centred. The label is still in the DOM
+   for screen readers and for the tooltip; only the visual text is dropped.
+   ------------------------------------------------------------------------- */
+
+.iconbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-width: 32px;
+  height: 32px;
+  padding-inline: var(--space-2);
+  border-radius: var(--radius-sm);
+  color: var(--ink-2);
+  transition:
+    background var(--fast) var(--ease),
+    color var(--fast) var(--ease);
+}
+
+.iconbtn:hover {
+  background: var(--paper-sunken);
+  color: var(--ink);
+}
+
+.iconbtn[aria-pressed="true"] {
+  background: var(--signal-soft);
+  color: var(--signal);
+}
+
+.iconbtn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.iconbtn:disabled:hover {
+  background: none;
+  color: var(--ink-2);
+}
+
+/* Label shown beside the glyph on wide viewports, hidden on narrow ones. */
+.iconbtn__label {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+@media (max-width: 52rem) {
+  .iconbtn__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+/* ===========================================================================
+   Settings
+   ===========================================================================
+   A form, not a control panel. One column at the reading measure, grouped by
+   the question each group answers rather than by which subsystem owns it.
+   ------------------------------------------------------------------------- */
+
+.settings {
+  padding-block: var(--space-6) var(--space-8);
+  max-width: var(--measure);
+}
+
+.settings__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--line);
+}
+
+.settings__title {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 400;
+}
+
+.settings__group {
+  margin-bottom: var(--space-7);
+}
+
+.settings__grouptitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--signal);
+}
+
+.settings__note {
+  margin-bottom: var(--space-4);
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+  max-width: 62ch;
+}
+
+.settings__fields {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.settings__warn,
+.settings__ok {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+}
+
+.settings__warn {
+  padding: var(--space-3);
+  border-radius: var(--radius);
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+.settings__ok {
+  color: var(--signal);
+}
+
+.settings__danger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  color: var(--danger);
+  font-size: var(--text-sm);
+  transition: background var(--fast) var(--ease), border-color var(--fast) var(--ease);
+}
+
+.settings__danger:hover {
+  background: var(--paper-sunken);
+  border-color: var(--danger);
+}
+
+/* --- Fields --------------------------------------------------------------- */
+
+.field {
+  display: grid;
+  /* Label column caps at 15rem so a long hint wraps under the label rather
+     than pushing the input off the measure. */
+  grid-template-columns: minmax(0, 15rem) 1fr;
+  gap: var(--space-2) var(--space-4);
+  align-items: start;
+}
+
+.field__label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 7px;
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.field__hint {
+  font-weight: 400;
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  color: var(--ink-3);
+}
+
+.field__input {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--paper-raised);
+  color: var(--ink);
+  font-size: var(--text-sm);
+  transition: border-color var(--fast) var(--ease), box-shadow var(--fast) var(--ease);
+}
+
+.field__input:focus {
+  outline: none;
+  border-color: var(--signal);
+  box-shadow: 0 0 0 3px var(--signal-soft);
+}
+
+@media (max-width: 40rem) {
+  .field {
+    grid-template-columns: 1fr;
+  }
+  .field__label {
+    padding-top: 0;
+  }
+}
+
+/* --- Rule lists ----------------------------------------------------------- */
+
+.rules__list {
+  list-style: none;
+  padding: 0;
+  margin: var(--space-2) 0 0;
+  display: grid;
+  gap: 1px;
+}
+
+.rules__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-1) 0 var(--space-1) var(--space-2);
+  border-top: 1px solid var(--line);
+}

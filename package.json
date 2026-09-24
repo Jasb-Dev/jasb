@@ -1,0 +1,32 @@
+{
+  "name": "jasb",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Type what you want, get the right sites. No chat, no agents, no ads.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20.11"
+  },
+  "packageManager": "pnpm@10.26.1",
+  "scripts": {
+    "build": "pnpm -r --filter \"./packages/**\" build && pnpm -r --filter \"./apps/**\" build",
+    "build:engine": "pnpm --filter @jasb/intent-engine build",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck",
+    "dev": "pnpm --parallel --filter @jasb/server --filter @jasb/web dev",
+    "server": "pnpm --filter @jasb/server dev",
+    "web": "pnpm --filter @jasb/web dev",
+    "extension": "pnpm --filter @jasb/extension build",
+    "desktop": "pnpm --filter @jasb/desktop dev",
+    "clean": "rm -rf node_modules packages/*/node_modules packages/*/dist apps/*/node_modules apps/*/dist"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2"
+  },
+  "pnpm": {
+    "// onlyBuiltDependencies": "pnpm 10 blocks install scripts by default. These three genuinely need them: Electron downloads its runtime, better-sqlite3 compiles a native binding, esbuild fetches its platform binary. Everything else stays blocked.",
+    "onlyBuiltDependencies": ["electron", "better-sqlite3", "esbuild"]
+  }
+}
