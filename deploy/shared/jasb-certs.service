@@ -1,0 +1,14 @@
+[Unit]
+Description=Renew the jasb.dev certificate and reload the shared nginx
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+# Only the jasb.dev lineage: ark's certificate is ark's business.
+ExecStart=/usr/bin/docker run --rm \
+  -v /opt/ark/nginx/ssl:/etc/letsencrypt \
+  -v ark_certbot_data:/var/www/certbot \
+  certbot/certbot renew --cert-name jasb.dev --quiet
+# A reload is graceful: open connections finish on the old workers.
+ExecStartPost=/usr/bin/docker exec ark_nginx nginx -s reload

@@ -1,0 +1,74 @@
+# Jasb on a machine it shares with another app.
+#
+# Ports 80 and 443 belong to the other app's nginx (a Docker container), which
+# terminates TLS for jasb.dev too and forwards plain HTTP here, on 8090, over
+# the Docker bridge. See nginx-jasb.conf for that half.
+#
+#   jasb.dev       → /srv/jasb/site
+#   app.jasb.dev   → /srv/jasb/app
+#   api.jasb.dev   → 127.0.0.1:8787
+#
+# Port 8090 is not open to the internet: ufw's default policy drops it, and
+# only the Docker subnets are allowed in.
+#
+# No `log` directive anywhere, as in the standalone Caddyfile: the privacy
+# policy promises no request logs.
+{
+	auto_https off
+	http_port 8090
+}
+
+(common) {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+		Permissions-Policy "interest-cohort=(), browsing-topics=()"
+		-Server
+	}
+}
+
+(static) {
+	@hashed path /assets/*
+	header @hashed Cache-Control "public, max-age=31536000, immutable"
+	header ?Cache-Control "no-cache"
+	file_server
+}
+
+http://www.jasb.dev:8090 {
+	redir https://jasb.dev{uri} permanent
+}
+
+http://jasb.dev:8090 {
+	import common
+	root * /srv/jasb/site
+	header X-Frame-Options "DENY"
+	try_files {path} {path}.html
+	import static
+	handle_errors {
+		rewrite * /index.html
+		file_server
+	}
+}
+
+http://app.jasb.dev:8090 {
+	import common
+	root * /srv/jasb/app
+	header X-Frame-Options "DENY"
+	try_files {path} /index.html
+	import static
+}
+
+http://api.jasb.dev:8090 {
+	import common
+	reverse_proxy 127.0.0.1:8787 {
+		health_uri /health
+		health_interval 30s
+	}
+}
+
+# Anything else that reaches this port is not ours.
+http://:8090 {
+	respond 404
+}
