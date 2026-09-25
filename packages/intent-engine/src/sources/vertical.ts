@@ -44,7 +44,12 @@ export class WikipediaSource implements SearchSource {
 
   async search(request: SearchRequest): Promise<Candidate[]> {
     // One reference card is the point — more would crowd out the open web.
-    const limit = Math.min(2, request.limit);
+    // A short query ("tardigrade", "rust ownership") may deserve two. A
+    // sentence does not: Wikipedia matches its words, not its meaning, so
+    // "how do tardigrades survive vacuum" returns *Tardigrade* and then
+    // *Vacuum*, and the second card reads as if we split the question.
+    const words = request.query.trim().split(/\s+/).filter(Boolean).length;
+    const limit = Math.min(words > 3 ? 1 : 2, request.limit);
     const url =
       `https://${this.#language}.wikipedia.org/w/rest.php/v1/search/page` +
       `?q=${encodeURIComponent(request.query)}&limit=${limit}`;
