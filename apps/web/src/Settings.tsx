@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { SYSTEM_ONE_PRESETS } from "@jasb/intent-engine";
-import { Icon, IconButton } from "@jasb/ui";
+import { Icon, IconButton, LicenseNotice, checkLicense, type LicenseCheck } from "@jasb/ui";
 
-import { checkLicense, serverUrl, type LicenseCheck } from "./client.ts";
+import { serverUrl } from "./client.ts";
 import {
   clearEverything,
   createPreferenceStore,
@@ -188,7 +188,7 @@ function LicenseGroup() {
     }
     let cancelled = false;
     const timer = setTimeout(() => {
-      void checkLicense(trimmed).then((result) => {
+      void checkLicense(serverUrl, trimmed).then((result) => {
         if (!cancelled) setCheck(result);
       });
     }, 400);
@@ -214,30 +214,7 @@ function LicenseGroup() {
           writeLicense(value);
         }}
       />
-      {check?.status === "valid" && (
-        <p className={check.active ? "settings__ok" : "settings__warn"}>
-          <Icon name={check.active ? "check" : "shield"} />
-          <span>
-            {check.plan === "pro"
-              ? check.active
-                ? "Pro is active on this browser."
-                : "This Pro subscription is no longer active. Renew it from your Paddle receipt email."
-              : "Supporter key recognised. Thank you."}
-          </span>
-        </p>
-      )}
-      {check?.status === "unknown" && (
-        <p className="settings__warn">
-          <Icon name="shield" />
-          <span>That key is not recognised. Check for a typo, or email contact@jasb.dev.</span>
-        </p>
-      )}
-      {check?.status === "unreachable" && (
-        <p className="settings__warn">
-          <Icon name="shield" />
-          <span>Could not reach the server to check the key. It is saved and will be used anyway.</span>
-        </p>
-      )}
+      {check && <LicenseNotice check={check} />}
     </Group>
   );
 }

@@ -17,7 +17,13 @@ import { API } from "./api.js";
 const PADDLE_JS = "https://cdn.paddle.com/paddle/v2/paddle.js";
 export const CLAIM_KEY = "jasb.claim";
 
-const LABELS = { pro: "Subscribe — $5/mo", supporter: "Support — $19 once" };
+/** Button text once checkout is live, and which configured price each opens. */
+const OFFERS = {
+  starter: { label: "Subscribe — $3/mo", price: (prices) => prices.starter?.[0] },
+  pro: { label: "Subscribe — $6/mo", price: (prices) => prices.pro?.[0] },
+  "pro-yearly": { label: "or $60 a year, two months free", price: (prices) => prices.pro?.[1] },
+  supporter: { label: "Support it once: $19 lifetime", price: (prices) => prices.supporter?.[0] },
+};
 
 async function init() {
   const buttons = document.querySelectorAll("[data-plan]");
@@ -32,7 +38,9 @@ async function init() {
   }
   if (!config?.enabled) return;
 
-  const offered = [...buttons].filter((button) => config.prices?.[button.dataset.plan]);
+  const offered = [...buttons].filter((button) =>
+    OFFERS[button.dataset.plan]?.price(config.prices ?? {}),
+  );
   if (offered.length === 0) return;
 
   try {
@@ -47,14 +55,16 @@ async function init() {
   Paddle.Initialize({ token: config.clientToken });
 
   for (const button of offered) {
-    const plan = button.dataset.plan;
-    button.textContent = LABELS[plan];
+    const offer = OFFERS[button.dataset.plan];
+    const priceId = offer.price(config.prices);
+    button.textContent = offer.label;
+    button.hidden = false;
     button.removeAttribute("href");
     button.setAttribute("role", "button");
     button.tabIndex = 0;
     const open = (event) => {
       event.preventDefault();
-      openCheckout(Paddle, config.prices[plan]);
+      openCheckout(Paddle, priceId);
     };
     button.addEventListener("click", open);
     button.addEventListener("keydown", (event) => {
@@ -66,8 +76,8 @@ async function init() {
   if (note) {
     note.innerHTML =
       "Payments run through <strong>Paddle</strong> as merchant of record: they handle tax " +
-      "and invoicing, and we never see a card number. No account needed — you get a " +
-      "licence key right after checkout.";
+      "and invoicing, and we never see a card number. No account needed: you get a " +
+      "licence key right after checkout. Cancel any time; refunds within 30 days, no questions.";
   }
 }
 

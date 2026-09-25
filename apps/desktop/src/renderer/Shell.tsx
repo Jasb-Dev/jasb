@@ -93,12 +93,17 @@ export function Shell() {
       });
       void window.jasb.getHistory(8).then(setHistory);
     } catch (error) {
+      // IPC wraps main-process errors as "Error invoking remote method …: Name: message".
+      const raw = error instanceof Error ? error.message : "";
+      const quota = raw.includes("QuotaExceeded");
+      const message = raw.replace(/^Error invoking remote method '[^']+': (?:\w+: )?/, "");
       setView({
         status: "error",
-        title: "That search did not complete",
-        body:
-          error instanceof Error
-            ? `${error.message}. Add a search provider key in settings, or check your connection.`
+        title: quota ? "Out of Jasb Search searches for this month" : "That search did not complete",
+        body: quota
+          ? message
+          : message
+            ? `${message}. Add a search provider key in settings, or check your connection.`
             : "Add a search provider key in settings, or check your connection.",
       });
     }
@@ -285,6 +290,7 @@ export function Shell() {
 
         {!settingsOpen && view.status === "idle" && (
           <>
+            <SupportNote />
             <EmptyState onPick={run} />
             {history.length > 0 && (
               <section style={{ paddingBottom: "var(--space-7)" }}>
@@ -352,5 +358,48 @@ export function Shell() {
         )}
       </main>
     </div>
+  );
+}
+
+/**
+ * The one ask. People on their own keys use Jasb for free, forever; after a
+ * hundred searches they see this once, and "Not now" means never again.
+ */
+function SupportNote() {
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    void window.jasb.getSearchSetup().then((setup) => setShow(setup.showSupportNote));
+  }, []);
+
+  if (!show) return null;
+
+  return (
+    <aside className="support-note">
+      <p>
+        <strong>Jasb is free on your own keys, and will stay that way.</strong> If it has earned
+        a place in your day, a one-time $19 Supporter licence keeps it independent: no ads, no
+        investors to answer to.
+      </p>
+      <div className="support-note__actions">
+        <button
+          type="button"
+          className="support-note__primary"
+          onClick={() => void window.jasb.openExternal("https://jasb.dev/#pricing")}
+        >
+          Support Jasb
+        </button>
+        <button
+          type="button"
+          className="support-note__dismiss"
+          onClick={() => {
+            setShow(false);
+            void window.jasb.dismissSupportNote();
+          }}
+        >
+          Not now
+        </button>
+      </div>
+    </aside>
   );
 }

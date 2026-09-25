@@ -8,6 +8,7 @@
  */
 
 import type { Card, ResolveResult } from "@jasb/intent-engine";
+import type { LicenseCheck } from "@jasb/ui/license";
 
 export interface TabState {
   id: number;
@@ -55,6 +56,18 @@ export interface AdblockState {
   ready: boolean;
 }
 
+/**
+ * Where searches go. `own-keys`: the engine runs here on the user's providers,
+ * free. `jasb`: Jasb Search, on a licence or the monthly free allowance.
+ */
+export interface SearchSetup {
+  route: "jasb" | "own-keys";
+  license: string;
+  check?: LicenseCheck;
+  /** Show the one-time "support Jasb" note (own-keys users, no Supporter licence). */
+  showSupportNote: boolean;
+}
+
 export interface HistoryEntry {
   query: string;
   at: number;
@@ -98,6 +111,12 @@ export interface DesktopApi {
   getByokStatus(): Promise<Record<keyof ByokSettings, boolean>>;
   setByok(settings: ByokSettings): Promise<void>;
 
+  getSearchSetup(): Promise<SearchSetup>;
+  setLicense(key: string): Promise<SearchSetup>;
+  dismissSupportNote(): Promise<void>;
+  /** Opens a URL in the user's default browser (pricing, receipts). */
+  openExternal(url: string): Promise<void>;
+
   getAdblock(): Promise<AdblockState>;
   setAdblockEnabled(enabled: boolean): Promise<AdblockState>;
   /** Pauses or resumes blocking on the active tab's site, then reloads it. */
@@ -129,6 +148,10 @@ export const CHANNELS = {
   clearAllData: "jasb:clear-all-data",
   getByokStatus: "jasb:get-byok-status",
   setByok: "jasb:set-byok",
+  getSearchSetup: "jasb:get-search-setup",
+  setLicense: "jasb:set-license",
+  dismissSupportNote: "jasb:dismiss-support-note",
+  openExternal: "jasb:open-external",
   getAdblock: "jasb:get-adblock",
   setAdblockEnabled: "jasb:set-adblock-enabled",
   toggleAdblockForActiveSite: "jasb:toggle-adblock-site",

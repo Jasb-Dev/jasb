@@ -58,7 +58,12 @@ async function poll(token, started) {
 }
 
 function show(key, plan) {
-  planEl.textContent = plan === "pro" ? "Jasb Pro is active." : "Thank you for supporting Jasb.";
+  planEl.textContent =
+    plan === "pro"
+      ? "Jasb Search Unlimited is active."
+      : plan === "starter"
+        ? "Jasb Search Starter is active: 300 searches a month."
+        : "Thank you for supporting Jasb. Your lifetime Supporter licence is below.";
   say("<strong>Your licence key</strong>");
   keyEl.textContent = key;
   row.hidden = false;

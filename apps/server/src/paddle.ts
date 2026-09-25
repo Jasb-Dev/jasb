@@ -62,8 +62,9 @@ interface PaddleEvent {
 }
 
 export interface PaddlePrices {
-  pro?: string;
-  supporter?: string;
+  starter: string[];
+  pro: string[];
+  supporter: string[];
 }
 
 /** Subscription states in which the customer is still paying, or still inside a grace period. */
@@ -85,12 +86,13 @@ export function applyPaddleEvent(
   if (type === "transaction.completed") {
     if (!data.id) return "ignored: transaction without id";
 
-    const priceIds = (data.items ?? []).map((item) => item.price?.id).filter(Boolean);
-    const plan: Plan | undefined = priceIds.includes(prices.pro)
-      ? "pro"
-      : priceIds.includes(prices.supporter)
-        ? "supporter"
-        : undefined;
+    const priceIds = (data.items ?? [])
+      .map((item) => item.price?.id)
+      .filter((id): id is string => Boolean(id));
+    // Highest plan wins if a transaction ever carries more than one.
+    const plan: Plan | undefined = (["pro", "starter", "supporter"] as const).find((candidate) =>
+      priceIds.some((id) => prices[candidate].includes(id)),
+    );
     if (!plan) return `ignored: no known price in ${priceIds.join(",") || "transaction"}`;
 
     const claim = data.custom_data?.claim;

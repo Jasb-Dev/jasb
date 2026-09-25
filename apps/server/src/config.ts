@@ -38,8 +38,15 @@ export interface ServerConfig {
   searxngUrl?: string;
   marginaliaApiKey?: string;
 
-  /** Free-tier AI searches per device per day. URL and navigation hits are unlimited. */
-  freeDailyQuota: number;
+  /**
+   * Jasb Search allowances, per month, Kagi-style. URL, bang and cache hits
+   * are never counted. Free is per device; paid plans are per licence, so one
+   * subscription covers every machine it is used on.
+   */
+  freeMonthlyQuota: number;
+  starterMonthlyQuota: number;
+  /** "Unlimited" is a fair-use ceiling, not a hard product limit. */
+  proMonthlyQuota: number;
   /**
    * Searches per device per day for anonymous visitors on the public demo.
    * Lower than the free tier: the demo exists to prove the product works, not
@@ -57,8 +64,6 @@ export interface ServerConfig {
    * feature, and the demo has no use for one.
    */
   refuseByok: boolean;
-  /** Pro devices get a fair-use ceiling rather than a hard cap. */
-  proDailyQuota: number;
   /**
    * A query is written to the shared cache only once this many distinct devices
    * have asked for it. The k-anonymity threshold from the privacy design.
@@ -74,7 +79,8 @@ export interface ServerConfig {
     /** Public, safe in the browser: Paddle.js needs it to open checkout. */
     clientToken?: string;
     webhookSecret?: string;
-    prices: { pro?: string; supporter?: string };
+    /** Price ids per plan. Several are allowed (monthly and yearly Pro). */
+    prices: { starter: string[]; pro: string[]; supporter: string[] };
   };
   /** Where the licence store lives. `/var/lib/jasb` in production. */
   stateDir: string;
@@ -83,6 +89,14 @@ export interface ServerConfig {
 function optional(name: string): string | undefined {
   const value = process.env[name]?.trim();
   return value ? value : undefined;
+}
+
+/** A comma-separated env var as a list, empty entries dropped. */
+function list(name: string): string[] {
+  return (optional(name) ?? "")
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
 }
 
 function integer(name: string, fallback: number): number {
@@ -124,11 +138,12 @@ export function loadConfig(): ServerConfig {
       ? { marginaliaApiKey: optional("JASB_MARGINALIA_API_KEY") }
       : {}),
 
-    freeDailyQuota: integer("JASB_FREE_DAILY_QUOTA", 15),
+    freeMonthlyQuota: integer("JASB_FREE_MONTHLY_QUOTA", 50),
+    starterMonthlyQuota: integer("JASB_STARTER_MONTHLY_QUOTA", 300),
+    proMonthlyQuota: integer("JASB_PRO_MONTHLY_QUOTA", 2_000),
     demoDailyQuota: integer("JASB_DEMO_DAILY_QUOTA", 5),
     dailyBudget: integer("JASB_DAILY_BUDGET", 2_000),
     refuseByok: (optional("JASB_REFUSE_BYOK") ?? "false") === "true",
-    proDailyQuota: integer("JASB_PRO_DAILY_QUOTA", 600),
     sharedCacheK: integer("JASB_SHARED_CACHE_K", 3),
 
     paddle: {
@@ -140,10 +155,9 @@ export function loadConfig(): ServerConfig {
         ? { webhookSecret: optional("JASB_PADDLE_WEBHOOK_SECRET") }
         : {}),
       prices: {
-        ...(optional("JASB_PADDLE_PRICE_PRO") ? { pro: optional("JASB_PADDLE_PRICE_PRO") } : {}),
-        ...(optional("JASB_PADDLE_PRICE_SUPPORTER")
-          ? { supporter: optional("JASB_PADDLE_PRICE_SUPPORTER") }
-          : {}),
+        starter: list("JASB_PADDLE_PRICE_STARTER"),
+        pro: list("JASB_PADDLE_PRICE_PRO"),
+        supporter: list("JASB_PADDLE_PRICE_SUPPORTER"),
       },
     },
     // STATE_DIRECTORY is set by systemd's StateDirectory=.
@@ -154,7 +168,9 @@ export function loadConfig(): ServerConfig {
 export function billingEnabled(config: ServerConfig): boolean {
   const { paddle } = config;
   return Boolean(
-    paddle.clientToken && paddle.webhookSecret && (paddle.prices.pro || paddle.prices.supporter),
+    paddle.clientToken &&
+      paddle.webhookSecret &&
+      (paddle.prices.starter.length || paddle.prices.pro.length || paddle.prices.supporter.length),
   );
 }
 
@@ -175,5 +191,5 @@ export function describeConfig(config: ServerConfig): string {
   ].filter(Boolean);
 
   const billing = billingEnabled(config) ? `paddle:${config.paddle.environment}` : "off";
-  return `decider=${decider} sources=${sources.join(",")} quota=${config.freeDailyQuota}/day billing=${billing}`;
+  return `decider=${decider} sources=${sources.join(",")} free=${config.freeMonthlyQuota}/month billing=${billing}`;
 }

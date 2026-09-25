@@ -10,7 +10,8 @@
     ".": "./src/index.ts",
     "./tokens.css": "./src/tokens.css",
     "./base.css": "./src/base.css",
-    "./components.css": "./src/components.css"
+    "./components.css": "./src/components.css",
+    "./license": "./src/license.ts"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json --noEmit",

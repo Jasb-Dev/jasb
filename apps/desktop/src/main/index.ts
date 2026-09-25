@@ -23,6 +23,7 @@ import type { Card, IntentEngine, ResolveResult } from "@jasb/intent-engine";
 
 import { Adblock, type AdblockSettings } from "./adblock.ts";
 import { buildEngine } from "./engine.ts";
+import { QuotaExceeded, checkLicenseRemote, resolveRemote } from "./jasb-search.ts";
 import { KeyVault } from "./keys.ts";
 import { LocalStore } from "./store.ts";
 import { CHROME_HEIGHT, TabManager } from "./tabs.ts";
@@ -31,6 +32,7 @@ import {
   type AdblockState,
   type ByokSettings,
   type Favourite,
+  type SearchSetup,
   type ShellState,
 } from "../shared/ipc.ts";
 
@@ -157,13 +159,91 @@ function handle<T>(channel: string, fn: (event: IpcMainInvokeEvent, ...args: nev
   ipcMain.handle(channel, fn as never);
 }
 
+// --- Search routing -----------------------------------------------------------
+
+const LICENSE_KEY = "license";
+const DEVICE_KEY = "device";
+const OWN_KEY_SEARCHES = "ownKeySearches";
+const SUPPORT_DISMISSED = "supportNoteDismissed";
+/** The support note appears once, after this many searches on the user's own keys. */
+const SUPPORT_NOTE_AFTER = 100;
+
+/** Last licence verdict, so Settings and the support note do not re-check every time. */
+let licenseCheck: SearchSetup["check"];
+
+function hasOwnKeys(): boolean {
+  return Object.values(vault?.status() ?? {}).some(Boolean);
+}
+
+/**
+ * A licence means Jasb Search. Without one, own keys mean local; with neither,
+ * the monthly free allowance of Jasb Search beats the thin free-sources-only
+ * local engine, so a first launch with nothing configured still searches well.
+ */
+function searchRoute(): SearchSetup["route"] {
+  const license = store?.setting(LICENSE_KEY, "") ?? "";
+  if (license) return "jasb";
+  return hasOwnKeys() ? "own-keys" : "jasb";
+}
+
+function deviceToken(): string {
+  let token = store?.setting(DEVICE_KEY, "") ?? "";
+  if (!token && store) {
+    token = crypto.randomUUID();
+    store.setSetting(DEVICE_KEY, token);
+  }
+  return token;
+}
+
+function searchSetup(): SearchSetup {
+  const route = searchRoute();
+  const supporter = licenseCheck?.status === "valid" && licenseCheck.plan === "supporter";
+  const searches = store?.setting(OWN_KEY_SEARCHES, 0) ?? 0;
+  return {
+    route,
+    license: store?.setting(LICENSE_KEY, "") ?? "",
+    ...(licenseCheck ? { check: licenseCheck } : {}),
+    showSupportNote:
+      route === "own-keys" &&
+      !supporter &&
+      searches >= SUPPORT_NOTE_AFTER &&
+      !(store?.setting(SUPPORT_DISMISSED, false) ?? false),
+  };
+}
+
 handle(CHANNELS.resolve, async (_event, query: string, options?: { refresh?: boolean }) => {
   if (!engine || !store) throw new Error("engine is not ready");
 
-  const result: ResolveResult = await engine.resolve(query, {
-    ...(options?.refresh ? { refresh: true } : {}),
-    locale: app.getLocale(),
-  });
+  const local = () =>
+    engine!.resolve(query, {
+      ...(options?.refresh ? { refresh: true } : {}),
+      locale: app.getLocale(),
+    });
+
+  let result: ResolveResult;
+  if (searchRoute() === "jasb") {
+    const license = store.setting(LICENSE_KEY, "");
+    try {
+      result = await resolveRemote({
+        query,
+        ...(options?.refresh ? { refresh: true } : {}),
+        locale: app.getLocale(),
+        device: deviceToken(),
+        ...(license ? { license } : {}),
+        rules: store.rules(),
+      });
+    } catch (error) {
+      // Out of searches: say so, and say what to do. Offline or server
+      // trouble: fall back to the local engine, which always works.
+      if (error instanceof QuotaExceeded && !hasOwnKeys()) throw error;
+      result = await local();
+    }
+  } else {
+    result = await local();
+    if (result.kind === "cards") {
+      store.setSetting(OWN_KEY_SEARCHES, store.setting(OWN_KEY_SEARCHES, 0) + 1);
+    }
+  }
 
   if (result.kind === "cards" && result.cards.length > 0) {
     store.recordSearch(query);
@@ -215,6 +295,7 @@ handle(CHANNELS.toggleFavourite, async (_event, entry: Omit<Favourite, "at">) =>
 
 handle(CHANNELS.clearAllData, async () => {
   store?.clearAll();
+  licenseCheck = undefined;
   adblock?.update(ADBLOCK_DEFAULT);
   vault?.clear();
   // Rebuild the engine so the cleared cache and keys take effect immediately
@@ -226,6 +307,28 @@ handle(CHANNELS.getByokStatus, async () => vault?.status() ?? {});
 handle(CHANNELS.setByok, async (_event, settings: ByokSettings) => {
   vault?.write(settings);
   if (vault && store) engine = buildEngine(vault, store);
+});
+
+handle(CHANNELS.getSearchSetup, async () => {
+  const license = store?.setting(LICENSE_KEY, "") ?? "";
+  if (license && !licenseCheck) licenseCheck = await checkLicenseRemote(license);
+  return searchSetup();
+});
+
+handle(CHANNELS.setLicense, async (_event, key: string) => {
+  const trimmed = key.trim().toLowerCase();
+  store?.setSetting(LICENSE_KEY, trimmed);
+  licenseCheck = trimmed ? await checkLicenseRemote(trimmed) : undefined;
+  return searchSetup();
+});
+
+handle(CHANNELS.dismissSupportNote, async () => {
+  store?.setSetting(SUPPORT_DISMISSED, true);
+});
+
+// Only our own pages, never an arbitrary URL from the renderer.
+handle(CHANNELS.openExternal, async (_event, url: string) => {
+  if (/^https:\/\/(?:[a-z0-9-]+\.)?jasb\.dev(?:\/|$)/.test(url)) await shell.openExternal(url);
 });
 
 function adblockState(): AdblockState {

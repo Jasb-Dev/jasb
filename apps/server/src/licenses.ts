@@ -21,12 +21,16 @@ import { createHash, randomBytes } from "node:crypto";
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 
-export type Plan = "pro" | "supporter";
+/**
+ * `starter` and `pro` buy Jasb Search. `supporter` is the one-time lifetime
+ * licence for people on their own keys: a thank-you, not an allowance.
+ */
+export type Plan = "starter" | "pro" | "supporter";
 
 export interface License {
   plan: Plan;
   active: boolean;
-  /** Paddle subscription id, for Pro. Supporter is a one-time purchase. */
+  /** Paddle subscription id, for Starter and Pro. Supporter is a one-time purchase. */
   subscriptionId?: string;
   createdAt: number;
 }

@@ -103,8 +103,10 @@ Checkout is built and switched off. It turns on when all of these are set in
 `/etc/jasb/jasb.env`, followed by a restart. Nothing needs rebuilding.
 
 1. Create the Paddle account and complete business verification. This takes days.
-2. **Catalog → Products:** create *Jasb Pro* with a $5/month price, and *Jasb
-   Supporter* with a $19 one-time price. Copy the two `pri_…` ids.
+2. **Catalog → Products:** create four prices and copy their `pri_…` ids:
+   - *Jasb Search Starter*: $3/month (300 searches a month)
+   - *Jasb Search Unlimited*: $6/month **and** $60/year (fair use: 2,000 a month)
+   - *Jasb Lifetime Supporter*: $19, one-time (for people on their own keys)
 3. **Developer tools → Authentication:** create a *client-side token* (`live_…` or `test_…`).
 4. **Developer tools → Notifications:** add a destination
    `https://api.jasb.dev/billing/webhook` with the events `transaction.completed`,
@@ -117,7 +119,8 @@ Checkout is built and switched off. It turns on when all of these are set in
 JASB_PADDLE_ENV=sandbox          # production once live
 JASB_PADDLE_CLIENT_TOKEN=test_…
 JASB_PADDLE_WEBHOOK_SECRET=pdl_ntfset_…
-JASB_PADDLE_PRICE_PRO=pri_…
+JASB_PADDLE_PRICE_STARTER=pri_…
+JASB_PADDLE_PRICE_PRO=pri_monthly…,pri_yearly…   # monthly first, then yearly
 JASB_PADDLE_PRICE_SUPPORTER=pri_…
 ```
 
@@ -126,10 +129,10 @@ ssh root@<ip> systemctl restart jasb-server
 ```
 
 **Check (sandbox first):** `/health` says `billing=paddle:sandbox`, and the
-pricing buttons on jasb.dev read "Subscribe" and "Support". Buy Pro with
+pricing buttons on jasb.dev read "Subscribe" and "Support". Buy Unlimited with
 Paddle's test card. You should land on `/welcome.html` with a `jasb-…` key.
 Paste the key into app.jasb.dev → Settings → Licence, where it should say
-"Pro is active". Cancel the subscription in the sandbox; the same field should
+"Jasb Search Unlimited is active". Cancel the subscription in the sandbox; the same field should
 then say it is no longer active.
 
 For production, repeat steps 2–4 in the live environment and switch

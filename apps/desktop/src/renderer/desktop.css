@@ -181,3 +181,83 @@ body {
   height: 16px;
   accent-color: var(--signal);
 }
+
+/* Licence field with its own save button. */
+.key-row {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.key-row .field__input {
+  flex: 1;
+}
+
+.key-row__save,
+.support-note__primary {
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--signal);
+  color: var(--paper);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.key-row__save:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.link-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--signal);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* The single, dismissible ask shown to own-key users. */
+.support-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+  margin-block: var(--space-6) 0;
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--signal-line);
+  border-radius: var(--radius-lg);
+  background: var(--signal-soft);
+  color: var(--ink-2);
+}
+
+.support-note p {
+  flex: 1 1 320px;
+  margin: 0;
+}
+
+.support-note strong {
+  color: var(--ink);
+}
+
+.support-note__actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.support-note__primary {
+  padding-block: var(--space-2);
+}
+
+.support-note__dismiss {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  cursor: pointer;
+}

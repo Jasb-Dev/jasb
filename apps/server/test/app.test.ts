@@ -1,4 +1,7 @@
 import assert from "node:assert/strict";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, it } from "node:test";
 
 import { hashQuery } from "@jasb/intent-engine";
@@ -13,7 +16,9 @@ function testConfig(overrides: Partial<ServerConfig> = {}): ServerConfig {
     ...loadConfig(),
     port: 0,
     allowedOrigins: ["*"],
-    freeDailyQuota: 3,
+    freeMonthlyQuota: 3,
+    // A fresh directory per app, so no counter carries over between tests.
+    stateDir: mkdtempSync(join(tmpdir(), "jasb-test-")),
     sharedCacheK: 2,
     ...overrides,
   };
@@ -227,7 +232,7 @@ describe("POST /resolve — demo mode", () => {
   });
 
   it("meters the demo separately from the signed-in free tier", async () => {
-    const app = createApp({ config: testConfig({ demoDailyQuota: 2, freeDailyQuota: 9 }) });
+    const app = createApp({ config: testConfig({ demoDailyQuota: 2, freeMonthlyQuota: 9 }) });
 
     const demo = (await (
       await app.request("/quota?demo=1", { headers: { "x-jasb-device": "d" } })
@@ -259,5 +264,27 @@ describe("POST /resolve — demo mode", () => {
     const body = (await response.json()) as { degraded: boolean; result: { kind: string } };
     assert.equal(body.degraded, true);
     assert.equal(body.result.kind, "navigate");
+  });
+});
+
+describe("QuotaTracker periods and persistence", () => {
+  it("resets a monthly allowance at the start of the next UTC month, not the next day", () => {
+    let now = Date.UTC(2026, 8, 30, 23, 0);
+    const tracker = new QuotaTracker({ limit: 1, period: "month", now: () => now });
+    assert.equal(tracker.consume("d").allowed, true);
+    now = Date.UTC(2026, 8, 30, 23, 59);
+    assert.equal(tracker.consume("d").allowed, false);
+    now = Date.UTC(2026, 9, 1, 0, 1);
+    assert.equal(tracker.consume("d").allowed, true);
+  });
+
+  it("keeps this month's counters across a restart", () => {
+    const path = join(mkdtempSync(join(tmpdir(), "jasb-q-")), "quota.json");
+    const first = new QuotaTracker({ limit: 2, period: "month", path });
+    first.consume("device-x");
+    first.consume("device-x");
+    first.flush();
+    const second = new QuotaTracker({ limit: 2, period: "month", path });
+    assert.equal(second.peek("device-x").allowed, false);
   });
 });

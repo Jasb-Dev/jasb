@@ -80,22 +80,3 @@ export async function resolveViaServer(
   const body = (await response.json()) as { result: ResolveResult };
   return body.result;
 }
-
-export type LicenseCheck =
-  | { status: "valid"; plan: "pro" | "supporter"; active: boolean }
-  | { status: "unknown" }
-  | { status: "unreachable" };
-
-export async function checkLicense(key: string): Promise<LicenseCheck> {
-  try {
-    const response = await fetch(`${await serverEndpoint()}/license`, {
-      headers: { "x-jasb-license": key.trim().toLowerCase() },
-    });
-    if (response.status === 404) return { status: "unknown" };
-    if (!response.ok) return { status: "unreachable" };
-    const body = (await response.json()) as { plan: "pro" | "supporter"; active: boolean };
-    return { status: "valid", plan: body.plan, active: body.active };
-  } catch {
-    return { status: "unreachable" };
-  }
-}

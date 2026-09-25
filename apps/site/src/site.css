@@ -498,6 +498,26 @@
 
 /* --- Pricing --------------------------------------------------------------- */
 
+/* The quiet second action under a plan: "support once", "or yearly". */
+.plan__support {
+  display: block;
+  margin-top: var(--space-3);
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--ink-2);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.plan__support:hover {
+  color: var(--signal);
+}
+
+/* Offers stay hidden until billing.js finds a price for them. */
+.plan__support[hidden] {
+  display: none;
+}
+
 .plans {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));

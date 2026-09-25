@@ -357,7 +357,7 @@
               No account to get started
             </span>
             <span class="refuse__why">
-              The free tier runs on a random token your device makes up. We cannot tie searches
+              The free allowance runs on a random token your device makes up. We cannot tie searches
               to a person because we never learn who the person is.
             </span>
           </li>
@@ -414,64 +414,67 @@
           </svg>
           Pricing
         </span>
-        <h2 class="section__title">One low price, or none at all if you bring your own keys.</h2>
+        <h2 class="section__title">Free with your own keys. Pay only if you want ours.</h2>
         <p class="section__lede">
-          An uncached search costs us about half a cent, almost all of it the search API rather
-          than the model. The pricing just reflects that.
+          Everything Jasb makes is free to use with your own provider keys, the browser
+          included. If you would rather not deal with keys, Jasb Search runs on ours, priced
+          like Kagi: by how much you search, never by what we learn about you.
         </p>
 
         <ul class="plans">
           <li class="plan">
-            <span class="plan__name">Bring your own keys</span>
+            <span class="plan__name">Your own keys</span>
             <span class="plan__price">Free <span>forever</span></span>
             <ul class="plan__list">
-              <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg> Unlimited searches</li>
-              <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg> Your keys, your providers</li>
-              <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg> Ollama and SearxNG supported</li>
+              <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg> Browser, extension and web app</li>
+              <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg> Unlimited searches, built-in ad blocking</li>
+              <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg> Any provider, or Ollama and SearxNG</li>
               <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg> Nothing passes through us</li>
             </ul>
             <span class="plan__foot">
-              <a class="btn btn--ghost btn--small" href="https://github.com/jasb-dev/jasb" rel="noopener">Get the source</a>
+              <a class="btn btn--ghost btn--small" href="#get">Get Jasb</a>
+              <a class="plan__support" href="mailto:contact@jasb.dev?subject=Jasb%20Supporter" data-plan="supporter">Support it once: $19 lifetime</a>
             </span>
           </li>
 
           <li class="plan">
-            <span class="plan__name">Free</span>
+            <span class="plan__name">Jasb Search · Free</span>
             <span class="plan__price">$0 <span>/ month</span></span>
             <ul class="plan__list">
-              <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg> 15 AI searches a day</li>
-              <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg> Unlimited URLs and bangs</li>
-              <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg> No account needed</li>
+              <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg> 50 searches a month</li>
+              <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg> URLs, bangs and repeat searches don't count</li>
+              <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg> No account, no key</li>
             </ul>
             <span class="plan__foot">
-              <a class="btn btn--ghost btn--small" href="#demo-input">Start here</a>
+              <a class="btn btn--ghost btn--small" href="https://app.jasb.dev">Start searching</a>
+            </span>
+          </li>
+
+          <li class="plan">
+            <span class="plan__name">Jasb Search · Starter</span>
+            <span class="plan__price">$3 <span>/ month</span></span>
+            <ul class="plan__list">
+              <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg> 300 searches a month</li>
+              <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg> The better decision model</li>
+              <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg> One licence, every device</li>
+            </ul>
+            <span class="plan__foot">
+              <a class="btn btn--ghost btn--small" href="mailto:contact@jasb.dev?subject=Jasb%20Starter" data-plan="starter">Join the waitlist</a>
             </span>
           </li>
 
           <li class="plan plan--featured">
-            <span class="plan__name">Pro</span>
-            <span class="plan__price">$5 <span>/ month</span></span>
+            <span class="plan__name">Jasb Search · Unlimited</span>
+            <span class="plan__price">$6 <span>/ month</span></span>
             <ul class="plan__list">
               <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg> Unlimited, within fair use</li>
               <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg> The better decision model</li>
-              <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg> Multi-source results</li>
+              <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg> One licence, every device</li>
               <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg> Sync across devices, when it ships</li>
             </ul>
             <span class="plan__foot">
-              <a class="btn btn--primary btn--small" href="mailto:contact@jasb.dev?subject=Jasb%20Pro" data-plan="pro">Join the waitlist</a>
-            </span>
-          </li>
-
-          <li class="plan">
-            <span class="plan__name">Supporter</span>
-            <span class="plan__price">$19 <span>once</span></span>
-            <ul class="plan__list">
-              <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg> For people on their own keys</li>
-              <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg> Early builds</li>
-              <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg> One payment, no subscription</li>
-            </ul>
-            <span class="plan__foot">
-              <a class="btn btn--ghost btn--small" href="mailto:contact@jasb.dev?subject=Jasb%20Supporter" data-plan="supporter">Get in touch</a>
+              <a class="btn btn--primary btn--small" href="mailto:contact@jasb.dev?subject=Jasb%20Unlimited" data-plan="pro">Join the waitlist</a>
+              <a class="plan__support" data-plan="pro-yearly" hidden>or $60 a year, two months free</a>
             </span>
           </li>
         </ul>
@@ -479,7 +482,7 @@
         <p class="plan__note" id="plan-note">
           Paid plans are not open yet. When they are, payments run through
           <strong>Paddle</strong> as merchant of record, so they handle tax and invoicing and we
-          never see a card number.
+          never see a card number. There is no account either way: you get a licence key.
         </p>
       </section>
 

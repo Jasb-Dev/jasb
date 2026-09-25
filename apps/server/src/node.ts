@@ -14,6 +14,14 @@ import { describeConfig, loadConfig } from "./config.ts";
 const config = loadConfig();
 const app = createApp({ config });
 
+// systemd sends SIGTERM on restart: write the monthly counters, then go.
+for (const signal of ["SIGTERM", "SIGINT"] as const) {
+  process.once(signal, () => {
+    app.flushState();
+    process.exit(0);
+  });
+}
+
 serve({ fetch: app.fetch, port: config.port, hostname: config.host }, (info) => {
   console.log(`jasb server  http://${config.host}:${info.port}`);
   console.log(`  ${describeConfig(config)}`);

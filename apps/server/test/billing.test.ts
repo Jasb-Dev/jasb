@@ -18,13 +18,19 @@ function billingConfig(overrides: Partial<ServerConfig> = {}): ServerConfig {
     ...loadConfig(),
     port: 0,
     allowedOrigins: ["*"],
-    freeDailyQuota: 1,
-    proDailyQuota: 50,
+    freeMonthlyQuota: 1,
+    starterMonthlyQuota: 30,
+    proMonthlyQuota: 50,
+    stateDir: mkdtempSync(join(tmpdir(), "jasb-test-")),
     paddle: {
       environment: "sandbox",
       clientToken: "test_client_token",
       webhookSecret: SECRET,
-      prices: { pro: "pri_pro", supporter: "pri_supporter" },
+      prices: {
+        starter: ["pri_starter"],
+        pro: ["pri_pro", "pri_pro_yearly"],
+        supporter: ["pri_supporter"],
+      },
     },
     ...overrides,
   };
@@ -84,7 +90,9 @@ describe("verifyPaddleSignature", () => {
 describe("billing routes", () => {
   it("stays off until the configuration is complete", async () => {
     const app = createApp({
-      config: billingConfig({ paddle: { environment: "sandbox", prices: {} } }),
+      config: billingConfig({
+        paddle: { environment: "sandbox", prices: { starter: [], pro: [], supporter: [] } },
+      }),
       licenses: new LicenseStore(),
     });
     assert.deepEqual(await (await app.request("/billing/config")).json(), { enabled: false });
@@ -175,6 +183,34 @@ describe("billing routes", () => {
     const { key } = (await (await app.request("/billing/claim?token=s")).json()) as { key: string };
     const quota = await app.request("/quota", { headers: { "x-jasb-device": "d1", "x-jasb-license": key } });
     assert.equal(((await quota.json()) as { plan: string }).plan, "free");
+  });
+});
+
+describe("plans", () => {
+  it("meters a Starter key monthly against its own allowance", async () => {
+    const { app } = setup();
+    await webhook(app, completed("txn_st", "pri_starter", { subscription_id: "sub_st", custom_data: { claim: "st" } }));
+    const { key } = (await (await app.request("/billing/claim?token=st")).json()) as { key: string };
+    const body = (await (
+      await app.request("/quota", { headers: { "x-jasb-device": "d1", "x-jasb-license": key } })
+    ).json()) as { plan: string; limit: number; period: string };
+    assert.deepEqual([body.plan, body.limit, body.period], ["starter", 30, "month"]);
+  });
+
+  it("recognises the yearly Pro price as Pro", async () => {
+    const { app } = setup();
+    await webhook(app, completed("txn_y", "pri_pro_yearly", { subscription_id: "sub_y", custom_data: { claim: "y" } }));
+    const claimed = (await (await app.request("/billing/claim?token=y")).json()) as { plan: string };
+    assert.equal(claimed.plan, "pro");
+  });
+
+  it("gives devices without a licence the monthly free allowance", async () => {
+    const { app } = setup();
+    const body = (await (await app.request("/quota", { headers: { "x-jasb-device": "d9" } })).json()) as {
+      plan: string;
+      period: string;
+    };
+    assert.deepEqual([body.plan, body.period], ["free", "month"]);
   });
 });
 

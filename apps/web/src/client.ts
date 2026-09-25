@@ -16,7 +16,8 @@ export interface QuotaState {
   remaining: number;
   limit: number;
   resetInSeconds: number;
-  plan?: "free" | "pro" | "demo";
+  plan?: "free" | "starter" | "pro" | "demo";
+  period?: "day" | "month";
 }
 
 export interface ResolveResponse {
@@ -26,10 +27,12 @@ export interface ResolveResponse {
 
 export class QuotaExceededError extends Error {
   readonly quota: QuotaState;
-  constructor(quota: QuotaState) {
-    super("daily free quota reached");
+  readonly plan: QuotaState["plan"];
+  constructor(quota: QuotaState, plan?: QuotaState["plan"]) {
+    super("search allowance used up");
     this.name = "QuotaExceededError";
     this.quota = quota;
+    this.plan = plan;
   }
 }
 
@@ -73,8 +76,8 @@ export async function resolve(args: ResolveArgs): Promise<ResolveResponse> {
   });
 
   if (response.status === 429) {
-    const body = (await response.json()) as { quota: QuotaState };
-    throw new QuotaExceededError(body.quota);
+    const body = (await response.json()) as { quota: QuotaState; plan?: QuotaState["plan"] };
+    throw new QuotaExceededError(body.quota, body.plan);
   }
 
   if (!response.ok) {
@@ -96,25 +99,6 @@ export async function fetchQuota(): Promise<QuotaState | undefined> {
     // The server being unreachable is not worth an error banner on its own —
     // the next search will surface it with a message that can actually help.
     return undefined;
-  }
-}
-
-export type LicenseCheck =
-  | { status: "valid"; plan: "pro" | "supporter"; active: boolean }
-  | { status: "unknown" }
-  | { status: "unreachable" };
-
-export async function checkLicense(key: string): Promise<LicenseCheck> {
-  try {
-    const response = await fetch(`${serverUrl}/license`, {
-      headers: { "x-jasb-license": key.trim().toLowerCase() },
-    });
-    if (response.status === 404) return { status: "unknown" };
-    if (!response.ok) return { status: "unreachable" };
-    const body = (await response.json()) as { plan: "pro" | "supporter"; active: boolean };
-    return { status: "valid", plan: body.plan, active: body.active };
-  } catch {
-    return { status: "unreachable" };
   }
 }
 

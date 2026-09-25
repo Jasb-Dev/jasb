@@ -44,9 +44,20 @@ const MAX_QUERY_LENGTH = 400;
 
 export function createApp(options: AppOptions) {
   const { config } = options;
+  const now = options.now ? { now: options.now } : {};
+  // Monthly counters survive restarts.
+  const persisted = (name: string) => ({ path: join(config.stateDir, `quota-${name}.json`) });
   const quota = new QuotaTracker({
-    limit: config.freeDailyQuota,
-    ...(options.now ? { now: options.now } : {}),
+    limit: config.freeMonthlyQuota,
+    period: "month",
+    ...now,
+    ...persisted("free"),
+  });
+  const starterQuota = new QuotaTracker({
+    limit: config.starterMonthlyQuota,
+    period: "month",
+    ...now,
+    ...persisted("starter"),
   });
   const demoQuota = new QuotaTracker({
     limit: config.demoDailyQuota,
@@ -59,9 +70,14 @@ export function createApp(options: AppOptions) {
   // Keyed by licence rather than device, so fair use is per subscription
   // however many machines it is used on.
   const proQuota = new QuotaTracker({
-    limit: config.proDailyQuota,
-    ...(options.now ? { now: options.now } : {}),
+    limit: config.proMonthlyQuota,
+    period: "month",
+    ...now,
+    ...persisted("pro"),
   });
+  const trackers = [quota, starterQuota, proQuota];
+  // Cheap when nothing changed. unref() so it never keeps a test alive.
+  setInterval(() => trackers.forEach((tracker) => tracker.flush()), 60_000).unref();
   const kGate = new KAnonymityGate(config.sharedCacheK);
   const licenses =
     options.licenses ??
@@ -74,8 +90,10 @@ export function createApp(options: AppOptions) {
   function meterFor(device: string, licenseKey: string | undefined, demo: boolean) {
     if (demo) return { tracker: demoQuota, id: device, plan: "demo" as const };
     const license = licenses.lookup(licenseKey);
-    if (license?.active && license.plan === "pro") {
-      return { tracker: proQuota, id: licenseKey!.trim().toLowerCase(), plan: "pro" as const };
+    const id = licenseKey?.trim().toLowerCase() ?? device;
+    if (license?.active && license.plan === "pro") return { tracker: proQuota, id, plan: "pro" as const };
+    if (license?.active && license.plan === "starter") {
+      return { tracker: starterQuota, id, plan: "starter" as const };
     }
     return { tracker: quota, id: device, plan: "free" as const };
   }
@@ -128,7 +146,7 @@ export function createApp(options: AppOptions) {
     const device = c.req.header(DEVICE_HEADER);
     if (!device) return c.json({ error: "missing device token" }, 400);
     const meter = meterFor(device, c.req.header(LICENSE_HEADER), c.req.query("demo") === "1");
-    return c.json({ ...meter.tracker.peek(meter.id), plan: meter.plan });
+    return c.json({ ...meter.tracker.peek(meter.id), plan: meter.plan, period: meter.tracker.period });
   });
 
   // --- Billing ---------------------------------------------------------------
@@ -249,12 +267,15 @@ export function createApp(options: AppOptions) {
             error: isDemo
               ? "that is all the demo allows today"
               : meter.plan === "pro"
-                ? "fair-use limit reached for today"
-                : "daily free quota reached",
+                ? "fair-use limit reached for this month"
+                : meter.plan === "starter"
+                  ? "this month's Starter searches are used up"
+                  : "this month's free searches are used up",
+            plan: meter.plan,
             quota: decision,
             hint: isDemo
-              ? "install the browser or the extension to keep going"
-              : "add your own provider key to continue without limits",
+              ? "get the extension or the browser to keep going — free with your own keys"
+              : "see plans at jasb.dev/#pricing, or add your own provider keys (always free)",
           },
           429,
         );
@@ -301,7 +322,8 @@ export function createApp(options: AppOptions) {
 
   app.notFound((c) => c.json({ error: "not found" }, 404));
 
-  return app;
+  // Called on shutdown so a deploy does not lose the last minute of counts.
+  return Object.assign(app, { flushState: () => trackers.forEach((tracker) => tracker.flush()) });
 }
 
 /**

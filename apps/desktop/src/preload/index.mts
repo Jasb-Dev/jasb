@@ -38,6 +38,11 @@ const api: DesktopApi = {
   getByokStatus: () => ipcRenderer.invoke(CHANNELS.getByokStatus),
   setByok: (settings) => ipcRenderer.invoke(CHANNELS.setByok, settings),
 
+  getSearchSetup: () => ipcRenderer.invoke(CHANNELS.getSearchSetup),
+  setLicense: (key) => ipcRenderer.invoke(CHANNELS.setLicense, key),
+  dismissSupportNote: () => ipcRenderer.invoke(CHANNELS.dismissSupportNote),
+  openExternal: (url) => ipcRenderer.invoke(CHANNELS.openExternal, url),
+
   getAdblock: () => ipcRenderer.invoke(CHANNELS.getAdblock),
   setAdblockEnabled: (enabled) => ipcRenderer.invoke(CHANNELS.setAdblockEnabled, enabled),
   toggleAdblockForActiveSite: () => ipcRenderer.invoke(CHANNELS.toggleAdblockForActiveSite),

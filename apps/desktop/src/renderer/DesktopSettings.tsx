@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { Icon, IconButton } from "@jasb/ui";
+import { Icon, IconButton, LicenseNotice } from "@jasb/ui";
 
-import type { AdblockState, ByokSettings } from "../shared/ipc.ts";
+import type { AdblockState, ByokSettings, SearchSetup } from "../shared/ipc.ts";
 
 /**
  * Desktop settings.
@@ -36,6 +36,8 @@ export function DesktopSettings({ onClose }: { onClose(): void }) {
         <h2 className="settings__title">Settings</h2>
         <IconButton icon="close" label="Close" onClick={onClose} iconOnly />
       </header>
+
+      <SearchGroup />
 
       <section className="settings__group">
         <h3 className="settings__grouptitle">
@@ -164,6 +166,88 @@ export function DesktopSettings({ onClose }: { onClose(): void }) {
           <span>Erase everything, including saved keys</span>
         </button>
       </section>
+    </section>
+  );
+}
+
+/**
+ * Where searches go, and the licence. Own keys are free and unlimited; Jasb
+ * Search is for people who would rather not manage keys.
+ */
+function SearchGroup() {
+  const [setup, setSetup] = useState<SearchSetup>();
+  const [draft, setDraft] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    void window.jasb.getSearchSetup().then((value) => {
+      setSetup(value);
+      setDraft(value.license);
+    });
+  }, []);
+
+  if (!setup) return null;
+
+  const supporter = setup.check?.status === "valid" && setup.check.plan === "supporter";
+
+  return (
+    <section className="settings__group">
+      <h3 className="settings__grouptitle">
+        <Icon name="search" />
+        <span>Search</span>
+      </h3>
+      <p className="settings__note">
+        {setup.route === "own-keys"
+          ? "Searches run on this Mac against the providers you set below: free and unlimited, and nothing passes through Jasb."
+          : setup.license
+            ? "Searches use Jasb Search on your licence. Your block and pin rules are applied on this Mac, after results arrive."
+            : "Searches use Jasb Search's free allowance: 50 a month, no account. Add your own provider keys below to search free without limits, or a licence for more Jasb Search."}
+      </p>
+      <div className="settings__fields">
+        <label className="field">
+          <span className="field__label">
+            Licence key
+            <span className="field__hint">From checkout at jasb.dev. Works on every device.</span>
+          </span>
+          <div className="key-row">
+            <input
+              className="field__input"
+              type="text"
+              autoComplete="off"
+              spellCheck={false}
+              value={draft}
+              placeholder="jasb-xxxxx-xxxxx-xxxxx-xxxxx"
+              onChange={(event) => setDraft(event.target.value)}
+            />
+            <button
+              type="button"
+              className="key-row__save"
+              disabled={saving || draft.trim().toLowerCase() === setup.license}
+              onClick={async () => {
+                setSaving(true);
+                setSetup(await window.jasb.setLicense(draft));
+                setSaving(false);
+              }}
+            >
+              {saving ? "Checking…" : "Save"}
+            </button>
+          </div>
+        </label>
+        {setup.check && <LicenseNotice check={setup.check} />}
+        {!supporter && (
+          <p className="settings__note">
+            On your own keys Jasb is free for good. If it is useful, a{" "}
+            <button
+              type="button"
+              className="link-button"
+              onClick={() => void window.jasb.openExternal("https://jasb.dev/#pricing")}
+            >
+              one-time $19 Supporter licence
+            </button>{" "}
+            keeps it independent.
+          </p>
+        )}
+      </div>
     </section>
   );
 }

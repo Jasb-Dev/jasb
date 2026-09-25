@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { Icon, IconButton } from "@jasb/ui";
+import { Icon, IconButton, LicenseNotice, checkLicense, type LicenseCheck } from "@jasb/ui";
 
-import { checkLicense, type LicenseCheck } from "../shared/client.ts";
+import { serverEndpoint } from "../shared/client.ts";
 import { loadLicense, saveLicense } from "../shared/rules.ts";
 
 /**
@@ -26,7 +26,7 @@ export function Settings({ onClose }: { onClose(): void }) {
     }
     let cancelled = false;
     const timer = setTimeout(() => {
-      void checkLicense(trimmed).then((result) => {
+      void serverEndpoint().then((server) => checkLicense(server, trimmed)).then((result) => {
         if (!cancelled) setCheck(result);
       });
     }, 400);
@@ -69,30 +69,7 @@ export function Settings({ onClose }: { onClose(): void }) {
             />
           </label>
 
-          {check?.status === "valid" && (
-            <p className={check.active ? "settings__ok" : "settings__warn"}>
-              <Icon name={check.active ? "check" : "shield"} />
-              <span>
-                {check.plan === "pro"
-                  ? check.active
-                    ? "Pro is active in this browser."
-                    : "This Pro subscription is no longer active."
-                  : "Supporter key recognised. Thank you."}
-              </span>
-            </p>
-          )}
-          {check?.status === "unknown" && (
-            <p className="settings__warn">
-              <Icon name="shield" />
-              <span>That key is not recognised. Check for a typo, or email contact@jasb.dev.</span>
-            </p>
-          )}
-          {check?.status === "unreachable" && (
-            <p className="settings__warn">
-              <Icon name="shield" />
-              <span>Could not reach the server to check the key. It is saved anyway.</span>
-            </p>
-          )}
+          {check && <LicenseNotice check={check} />}
         </div>
       </section>
     </section>

@@ -95,10 +95,16 @@ export function App() {
           setQuota(error.quota);
           setView({
             status: "error",
-            title: "You have used today's free searches",
+            title:
+              error.plan === "pro"
+                ? "You have reached this month's fair-use limit"
+                : error.plan === "starter"
+                  ? "This month's 300 Starter searches are used up"
+                  : "This month's 50 free searches are used up",
             body:
-              "URLs, bangs and repeat searches stay unlimited. Add your own provider key " +
-              "to lift the limit entirely — the key is used for your requests only.",
+              `It resets in ${Math.ceil(error.quota.resetInSeconds / 86_400)} days. URLs, bangs and ` +
+              "repeat searches never count. For more, Jasb Search Unlimited is $6 a month " +
+              "(jasb.dev/#pricing), or add your own provider keys and search without limits, free.",
             action: "settings",
           });
           return;

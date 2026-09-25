@@ -18,3 +18,11 @@ export { useTheme, ThemeToggle, type Theme } from "./theme.tsx";
 export { Icon, type IconName, type IconProps } from "./Icon.tsx";
 export { Logo, LogoMark, type LogoProps } from "./Logo.tsx";
 export { IconButton, type IconButtonProps } from "./IconButton.tsx";
+export {
+  checkLicense,
+  describeLicense,
+  PLAN_NAMES,
+  type LicenseCheck,
+  type LicensePlan,
+} from "./license.ts";
+export { LicenseNotice } from "./LicenseNotice.tsx";
