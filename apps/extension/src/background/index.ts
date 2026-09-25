@@ -81,6 +81,11 @@ chrome.omnibox.onInputEntered.addListener((text, disposition) => {
   }
 });
 
+/** On first install, open the new-tab page once with the welcome card. */
+chrome.runtime.onInstalled.addListener((details) => {
+  if (details.reason === "install") void chrome.tabs.create({ url: `${NEW_TAB_URL}?welcome=1` });
+});
+
 /** Clicking the toolbar icon opens the new tab page, the product's front door. */
 chrome.action.onClicked.addListener(() => {
   void chrome.tabs.create({ url: NEW_TAB_URL });

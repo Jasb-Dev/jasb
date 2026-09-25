@@ -22,7 +22,16 @@ import {
 import type { Card, IntentEngine, ResolveResult } from "@jasb/intent-engine";
 
 import { Adblock, type AdblockSettings } from "./adblock.ts";
+import { CookiePopups } from "./cookies.ts";
 import { buildEngine } from "./engine.ts";
+import {
+  importableBrowsers,
+  isDefaultBrowser,
+  makeDefaultBrowser,
+  openAtLogin,
+  readBookmarks,
+  setOpenAtLogin,
+} from "./onboarding.ts";
 import { QuotaExceeded, checkLicenseRemote, resolveRemote } from "./jasb-search.ts";
 import { KeyVault } from "./keys.ts";
 import { LocalStore } from "./store.ts";
@@ -51,10 +60,11 @@ let store: LocalStore | undefined;
 let vault: KeyVault | undefined;
 let engine: IntentEngine | undefined;
 let adblock: Adblock | undefined;
+let cookiePopups: CookiePopups | undefined;
 
 const ADBLOCK_KEY = "adblock";
 /** On by default: a browser that promises clean pages should deliver them. */
-const ADBLOCK_DEFAULT: AdblockSettings = { enabled: true, pausedDomains: [] };
+const ADBLOCK_DEFAULT: AdblockSettings = { enabled: true, pausedDomains: [], cookiePopups: true };
 
 function publishState(): void {
   if (!chrome || !tabs) return;
@@ -117,6 +127,29 @@ function createWindow(): void {
     adblock,
     onChange: publishState,
   });
+
+  try {
+    cookiePopups = new CookiePopups(pageSession, {
+      dir: app.getPath("userData"),
+      // The site switch in the shield panel pauses this too: one switch per
+      // site for "Jasb, stop interfering here".
+      allowed: (url) => {
+        const settings = adblockState();
+        let host = "";
+        try {
+          host = new URL(url).hostname.replace(/^www\./, "");
+        } catch {
+          return false;
+        }
+        return settings.cookiePopups && !adblock?.isPaused(host);
+      },
+      onHandled: (webContentsId, cmp) => tabs?.noteCookiePopup(webContentsId, cmp),
+    });
+    cookiePopups.setEnabled(adblockState().cookiePopups);
+  } catch (error) {
+    // A missing or unreadable rules file must not stop the browser.
+    console.warn("cookie pop-up handling unavailable:", error);
+  }
 
   const layout = () => {
     if (!window || !chrome) return;
@@ -232,6 +265,22 @@ handle(CHANNELS.resolve, async (_event, query: string, options?: { refresh?: boo
         ...(license ? { license } : {}),
         rules: store.rules(),
       });
+      // Page X-ray, first cut: what this machine has measured on these sites
+      // (trackers matched by the blocker, load time, paywall) replaces the
+      // server's generic estimate. Measured beats guessed.
+      if (result.kind === "cards") {
+        const measured = await store
+          .preferenceStore()
+          .domainSignals?.(result.cards.map((card) => card.domain));
+        if (measured) {
+          result = {
+            ...result,
+            cards: result.cards.map((card) =>
+              measured[card.domain] ? { ...card, signals: { ...card.signals, ...measured[card.domain] } } : card,
+            ),
+          };
+        }
+      }
     } catch (error) {
       // Out of searches: say so, and say what to do. Offline or server
       // trouble: fall back to the local engine, which always works.
@@ -256,8 +305,10 @@ handle(CHANNELS.resolve, async (_event, query: string, options?: { refresh?: boo
   return result;
 });
 
-handle(CHANNELS.openCard, async (_event, card: Card) => {
-  tabs?.navigate(card.url);
+// Results always get a tab of their own: the grid stays one click away and
+// several results can be compared side by side.
+handle(CHANNELS.openCard, async (_event, card: Card, options?: { background?: boolean }) => {
+  tabs?.open(card.url, options?.background ? { background: true } : {});
 });
 
 handle(CHANNELS.navigate, async (_event, url: string) => {
@@ -294,7 +345,10 @@ handle(CHANNELS.toggleFavourite, async (_event, entry: Omit<Favourite, "at">) =>
 );
 
 handle(CHANNELS.clearAllData, async () => {
+  // Keeps the welcome from reappearing after "erase everything".
+  const welcomed = store?.setting(WELCOME_DONE, false) ?? false;
   store?.clearAll();
+  if (welcomed) store?.setSetting(WELCOME_DONE, true);
   licenseCheck = undefined;
   adblock?.update(ADBLOCK_DEFAULT);
   vault?.clear();
@@ -307,6 +361,73 @@ handle(CHANNELS.getByokStatus, async () => vault?.status() ?? {});
 handle(CHANNELS.setByok, async (_event, settings: ByokSettings) => {
   vault?.write(settings);
   if (vault && store) engine = buildEngine(vault, store);
+});
+
+handle(CHANNELS.getSiteReport, async () => tabs?.siteReport());
+
+handle(CHANNELS.burn, async () => {
+  tabs?.burnAll();
+  const pages = session.fromPartition("persist:pages");
+  await Promise.all([pages.clearStorageData(), pages.clearCache(), pages.clearAuthCache()]);
+  store?.clearBrowsing();
+  // The engine holds an in-memory result cache too; rebuilding drops it.
+  if (vault && store) engine = buildEngine(vault, store);
+});
+
+handle(CHANNELS.setOverlay, async (_event, open: boolean) => {
+  if (!window || !chrome) return;
+  if (open) {
+    // Transparent chrome on top: the panel overlaps the page, which stays
+    // visible behind it. Clicks outside the panel land on the chrome and
+    // close it, rather than reaching the page.
+    chrome.setBackgroundColor("#00000000");
+    window.contentView.addChildView(chrome);
+  } else {
+    chrome.setBackgroundColor("#00000000");
+    tabs?.raiseActive();
+  }
+});
+
+handle(CHANNELS.setBannerHeight, async (_event, px: number) => {
+  tabs?.setBannerHeight(px);
+});
+
+// --- Welcome and tips ---------------------------------------------------------
+
+const WELCOME_DONE = "welcomeDone";
+const TIPS_SEEN = "tipsSeen";
+
+function welcomeState() {
+  return {
+    done: store?.setting(WELCOME_DONE, false) ?? false,
+    tipsSeen: store?.setting<string[]>(TIPS_SEEN, []) ?? [],
+    browsers: importableBrowsers(),
+    openAtLogin: openAtLogin(),
+    isDefault: isDefaultBrowser(),
+    canMakeDefault: app.isPackaged,
+  };
+}
+
+handle(CHANNELS.getWelcome, async () => welcomeState());
+handle(CHANNELS.finishWelcome, async () => {
+  store?.setSetting(WELCOME_DONE, true);
+});
+handle(CHANNELS.markTipSeen, async (_event, id: string) => {
+  const seen = new Set(store?.setting<string[]>(TIPS_SEEN, []) ?? []);
+  seen.add(id);
+  store?.setSetting(TIPS_SEEN, [...seen]);
+});
+handle(CHANNELS.importBookmarks, async (_event, browser?: string) => {
+  const found = readBookmarks(browser);
+  return { added: store?.addFavourites(found) ?? 0, found: found.length };
+});
+handle(CHANNELS.makeDefaultBrowser, async () => {
+  makeDefaultBrowser();
+  return welcomeState();
+});
+handle(CHANNELS.setOpenAtLogin, async (_event, enabled: boolean) => {
+  setOpenAtLogin(enabled);
+  return welcomeState();
 });
 
 handle(CHANNELS.getSearchSetup, async () => {
@@ -326,14 +447,23 @@ handle(CHANNELS.dismissSupportNote, async () => {
   store?.setSetting(SUPPORT_DISMISSED, true);
 });
 
-// Only our own pages, never an arbitrary URL from the renderer.
+// Only our own pages and our own address, never an arbitrary URL from the
+// renderer: a compromised chrome must not be able to launch other apps.
 handle(CHANNELS.openExternal, async (_event, url: string) => {
-  if (/^https:\/\/(?:[a-z0-9-]+\.)?jasb\.dev(?:\/|$)/.test(url)) await shell.openExternal(url);
+  const ours = /^https:\/\/(?:[a-z0-9-]+\.)?jasb\.dev(?:[/?#]|$)/.test(url);
+  const mail = /^mailto:(?:dev|contact)@jasb\.dev(?:\?|$)/.test(url);
+  const store = /^https:\/\/chromewebstore\.google\.com\//.test(url);
+  if (ours || mail || store) await shell.openExternal(url);
 });
 
 function adblockState(): AdblockState {
   const settings = adblock?.settings ?? ADBLOCK_DEFAULT;
-  return { ...settings, ready: adblock?.ready ?? false };
+  return {
+    enabled: settings.enabled,
+    pausedDomains: settings.pausedDomains,
+    cookiePopups: settings.cookiePopups ?? true,
+    ready: adblock?.ready ?? false,
+  };
 }
 
 function saveAdblock(settings: AdblockSettings): AdblockState {
@@ -344,6 +474,12 @@ function saveAdblock(settings: AdblockSettings): AdblockState {
 }
 
 handle(CHANNELS.getAdblock, async () => adblockState());
+
+handle(CHANNELS.setCookiePopups, async (_event, enabled: boolean) => {
+  const state = saveAdblock({ ...adblockState(), cookiePopups: enabled });
+  cookiePopups?.setEnabled(enabled);
+  return state;
+});
 
 handle(CHANNELS.setAdblockEnabled, async (_event, enabled: boolean) => {
   const state = saveAdblock({ ...adblockState(), enabled });
@@ -358,6 +494,7 @@ handle(CHANNELS.toggleAdblockForActiveSite, async () => {
   const paused = current.pausedDomains.includes(domain);
   const state = saveAdblock({
     enabled: current.enabled,
+    cookiePopups: current.cookiePopups,
     pausedDomains: paused
       ? current.pausedDomains.filter((entry) => entry !== domain)
       : [...current.pausedDomains, domain].sort(),
@@ -370,6 +507,7 @@ handle(CHANNELS.resumeAdblockFor, async (_event, domain: string) => {
   const current = adblockState();
   return saveAdblock({
     enabled: current.enabled,
+    cookiePopups: current.cookiePopups,
     pausedDomains: current.pausedDomains.filter((entry) => entry !== domain),
   });
 });
@@ -383,8 +521,27 @@ handle(CHANNELS.resumeAdblockFor, async (_event, domain: string) => {
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
-  app.on("second-instance", () => {
+  // As the default browser, links from other apps arrive here: macOS sends
+  // open-url, Windows and Linux start a second instance with the URL in argv.
+  const openExternalLink = (url: string) => {
+    if (!/^https?:\/\//.test(url)) return;
+    if (tabs) tabs.open(url);
+    else pendingLinks.push(url);
     window?.focus();
+  };
+  const pendingLinks: string[] = [];
+  app.on("open-url", (event, url) => {
+    event.preventDefault();
+    openExternalLink(url);
+  });
+  app.on("second-instance", (_event, argv) => {
+    argv.filter((arg) => /^https?:\/\//.test(arg)).forEach(openExternalLink);
+    window?.focus();
+  });
+  void app.whenReady().then(() => {
+    // Launched by a link (Windows/Linux pass it in argv on first start).
+    if (app.isPackaged) pendingLinks.push(...process.argv.filter((arg) => /^https?:\/\//.test(arg)));
+    setTimeout(() => pendingLinks.splice(0).forEach((url) => tabs?.open(url)), 500);
   });
 
   void app.whenReady().then(() => {

@@ -11,9 +11,12 @@ import type { ResolveResult } from "@jasb/intent-engine";
 export function StatusLine({
   result,
   quotaRemaining,
+  onOpenAll,
 }: {
   result: Extract<ResolveResult, { kind: "cards" }>;
   quotaRemaining?: number;
+  /** Opens every card in a background tab, for research sessions. */
+  onOpenAll?(): void;
 }) {
   return (
     <div className="status" role="status">
@@ -37,8 +40,20 @@ export function StatusLine({
 
       {quotaRemaining !== undefined && quotaRemaining >= 0 && (
         <span className="status__item" style={{ marginInlineStart: "auto" }}>
-          {quotaRemaining} free searches left today
+          {quotaRemaining} searches left this month
         </span>
+      )}
+
+      {onOpenAll && result.cards.length > 1 && (
+        <button
+          type="button"
+          className="status__action"
+          style={quotaRemaining !== undefined && quotaRemaining >= 0 ? undefined : { marginInlineStart: "auto" }}
+          onClick={onOpenAll}
+          title="Open every result in a background tab (⌘/Ctrl-click or middle-click opens one)"
+        >
+          Open all {result.cards.length} in tabs
+        </button>
       )}
     </div>
   );

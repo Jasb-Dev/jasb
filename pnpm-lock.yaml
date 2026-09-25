@@ -17,6 +17,9 @@ importers:
 
   apps/desktop:
     dependencies:
+      '@duckduckgo/autoconsent':
+        specifier: ^16.42.0
+        version: 16.42.0
       '@ghostery/adblocker-electron':
         specifier: ^2.18.2
         version: 2.18.2(electron@44.4.5)
@@ -280,6 +283,9 @@ packages:
   '@develar/schema-utils@2.6.5':
     resolution: {integrity: sha512-0cp4PsWQ/9avqTVMCtZ+GirikIA36ikvjtHweU4/j8yLtgObI0+JUPhYFScgwlteveGB1rt3Cm8UhN04XayDig==}
     engines: {node: '>= 8.9.0'}
+
+  '@duckduckgo/autoconsent@16.42.0':
+    resolution: {integrity: sha512-rpG6FnMzOGIfnWWw8qYjXmyfl+li+V1Z1AJVzEOOMg2d2Hc7ZgVTqyWkN0aMI0C/+mY6f1myTTdd7bimIsVC2g==}
 
   '@electron-internal/extract-zip@1.0.5':
     resolution: {integrity: sha512-+bqFCP98pLI0Tt0XQo1TmlXtwjWchISndDOxCkEcIuUgXWpBnLyRI+2DU+mesvnMMX6L1XDqYNA0lXNDHd/yiA==}
@@ -2225,6 +2231,10 @@ snapshots:
     dependencies:
       ajv: 6.15.0
       ajv-keywords: 3.5.2(ajv@6.15.0)
+
+  '@duckduckgo/autoconsent@16.42.0':
+    dependencies:
+      tldts-experimental: 7.4.15
 
   '@electron-internal/extract-zip@1.0.5': {}
 

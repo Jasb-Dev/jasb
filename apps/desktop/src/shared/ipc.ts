@@ -21,6 +21,8 @@ export interface TabState {
   trackerCount: number;
   /** Requests the ad blocker stopped on this page. */
   blockedCount: number;
+  /** Known companies blocked on this page, most-blocked first (for the tip). */
+  blockedCompanies: string[];
   /** Blocking is paused for this tab's site. */
   adblockPaused: boolean;
   favicon?: string;
@@ -49,9 +51,43 @@ export interface ByokSettings {
   searxngUrl?: string;
 }
 
+/** First-run state: the welcome flow and the one-time tips after it. */
+export interface WelcomeState {
+  done: boolean;
+  tipsSeen: string[];
+  /** Browsers with a bookmarks file we can read. */
+  browsers: string[];
+  openAtLogin: boolean;
+  isDefault: boolean;
+  /** False in development builds, where "make default" would point at Electron. */
+  canMakeDefault: boolean;
+}
+
+export interface CompanyGroup {
+  /** Company name when known, otherwise the host. */
+  name: string;
+  known: boolean;
+  hosts: string[];
+  count: number;
+}
+
+/** The shield panel's view of the page in the active tab. */
+export interface SiteReport {
+  domain: string;
+  secure: boolean;
+  paused: boolean;
+  blockedCount: number;
+  blocked: CompanyGroup[];
+  loaded: CompanyGroup[];
+  /** The consent platform whose pop-up was declined, when one was. */
+  cookiePopup?: string;
+}
+
 export interface AdblockState {
   enabled: boolean;
   pausedDomains: string[];
+  /** Decline cookie consent pop-ups automatically. */
+  cookiePopups: boolean;
   /** False until the filter lists have loaded. */
   ready: boolean;
 }
@@ -84,7 +120,8 @@ export interface Favourite {
 export interface DesktopApi {
   resolve(query: string, options?: { refresh?: boolean }): Promise<ResolveResult>;
 
-  openCard(card: Card): Promise<void>;
+  /** Opens a result in a new tab; `background` keeps the grid in front. */
+  openCard(card: Card, options?: { background?: boolean }): Promise<void>;
   navigate(url: string): Promise<void>;
 
   newTab(url?: string): Promise<number>;
@@ -111,6 +148,28 @@ export interface DesktopApi {
   getByokStatus(): Promise<Record<keyof ByokSettings, boolean>>;
   setByok(settings: ByokSettings): Promise<void>;
 
+  /** The shield panel's data for the active tab. */
+  getSiteReport(): Promise<SiteReport | undefined>;
+  /**
+   * The Fire button: closes all tabs and clears cookies, site data, cache,
+   * search history and page measurements. Keys, licence and rules stay.
+   */
+  burn(): Promise<void>;
+  /**
+   * Lifts the chrome above the page (transparent everywhere it draws nothing)
+   * so a panel can overlap the page; `false` puts the page back on top.
+   */
+  setOverlay(open: boolean): Promise<void>;
+  /** Makes room above the page for a tip banner of this height. */
+  setBannerHeight(px: number): Promise<void>;
+
+  getWelcome(): Promise<WelcomeState>;
+  finishWelcome(): Promise<void>;
+  markTipSeen(id: string): Promise<void>;
+  importBookmarks(browser?: string): Promise<{ added: number; found: number }>;
+  makeDefaultBrowser(): Promise<WelcomeState>;
+  setOpenAtLogin(enabled: boolean): Promise<WelcomeState>;
+
   getSearchSetup(): Promise<SearchSetup>;
   setLicense(key: string): Promise<SearchSetup>;
   dismissSupportNote(): Promise<void>;
@@ -119,6 +178,7 @@ export interface DesktopApi {
 
   getAdblock(): Promise<AdblockState>;
   setAdblockEnabled(enabled: boolean): Promise<AdblockState>;
+  setCookiePopups(enabled: boolean): Promise<AdblockState>;
   /** Pauses or resumes blocking on the active tab's site, then reloads it. */
   toggleAdblockForActiveSite(): Promise<AdblockState>;
   resumeAdblockFor(domain: string): Promise<AdblockState>;
@@ -148,12 +208,23 @@ export const CHANNELS = {
   clearAllData: "jasb:clear-all-data",
   getByokStatus: "jasb:get-byok-status",
   setByok: "jasb:set-byok",
+  getSiteReport: "jasb:get-site-report",
+  burn: "jasb:burn",
+  setOverlay: "jasb:set-overlay",
+  setBannerHeight: "jasb:set-banner-height",
+  getWelcome: "jasb:get-welcome",
+  finishWelcome: "jasb:finish-welcome",
+  markTipSeen: "jasb:mark-tip-seen",
+  importBookmarks: "jasb:import-bookmarks",
+  makeDefaultBrowser: "jasb:make-default-browser",
+  setOpenAtLogin: "jasb:set-open-at-login",
   getSearchSetup: "jasb:get-search-setup",
   setLicense: "jasb:set-license",
   dismissSupportNote: "jasb:dismiss-support-note",
   openExternal: "jasb:open-external",
   getAdblock: "jasb:get-adblock",
   setAdblockEnabled: "jasb:set-adblock-enabled",
+  setCookiePopups: "jasb:set-cookie-popups",
   toggleAdblockForActiveSite: "jasb:toggle-adblock-site",
   resumeAdblockFor: "jasb:resume-adblock-for",
   shellState: "jasb:shell-state",

@@ -13,7 +13,7 @@ import { CHANNELS, type DesktopApi, type ShellState } from "../shared/ipc.ts";
 const api: DesktopApi = {
   resolve: (query, options) => ipcRenderer.invoke(CHANNELS.resolve, query, options),
 
-  openCard: (card) => ipcRenderer.invoke(CHANNELS.openCard, card),
+  openCard: (card, options) => ipcRenderer.invoke(CHANNELS.openCard, card, options),
   navigate: (url) => ipcRenderer.invoke(CHANNELS.navigate, url),
 
   newTab: (url) => ipcRenderer.invoke(CHANNELS.newTab, url),
@@ -38,6 +38,18 @@ const api: DesktopApi = {
   getByokStatus: () => ipcRenderer.invoke(CHANNELS.getByokStatus),
   setByok: (settings) => ipcRenderer.invoke(CHANNELS.setByok, settings),
 
+  getSiteReport: () => ipcRenderer.invoke(CHANNELS.getSiteReport),
+  burn: () => ipcRenderer.invoke(CHANNELS.burn),
+  setOverlay: (open) => ipcRenderer.invoke(CHANNELS.setOverlay, open),
+  setBannerHeight: (px) => ipcRenderer.invoke(CHANNELS.setBannerHeight, px),
+
+  getWelcome: () => ipcRenderer.invoke(CHANNELS.getWelcome),
+  finishWelcome: () => ipcRenderer.invoke(CHANNELS.finishWelcome),
+  markTipSeen: (id) => ipcRenderer.invoke(CHANNELS.markTipSeen, id),
+  importBookmarks: (browser) => ipcRenderer.invoke(CHANNELS.importBookmarks, browser),
+  makeDefaultBrowser: () => ipcRenderer.invoke(CHANNELS.makeDefaultBrowser),
+  setOpenAtLogin: (enabled) => ipcRenderer.invoke(CHANNELS.setOpenAtLogin, enabled),
+
   getSearchSetup: () => ipcRenderer.invoke(CHANNELS.getSearchSetup),
   setLicense: (key) => ipcRenderer.invoke(CHANNELS.setLicense, key),
   dismissSupportNote: () => ipcRenderer.invoke(CHANNELS.dismissSupportNote),
@@ -45,6 +57,7 @@ const api: DesktopApi = {
 
   getAdblock: () => ipcRenderer.invoke(CHANNELS.getAdblock),
   setAdblockEnabled: (enabled) => ipcRenderer.invoke(CHANNELS.setAdblockEnabled, enabled),
+  setCookiePopups: (enabled) => ipcRenderer.invoke(CHANNELS.setCookiePopups, enabled),
   toggleAdblockForActiveSite: () => ipcRenderer.invoke(CHANNELS.toggleAdblockForActiveSite),
   resumeAdblockFor: (domain) => ipcRenderer.invoke(CHANNELS.resumeAdblockFor, domain),
 

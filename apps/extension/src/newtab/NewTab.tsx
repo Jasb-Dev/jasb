@@ -36,6 +36,10 @@ export function NewTab() {
   const [input, setInput] = useState("");
   const [view, setView] = useState<View>({ status: "idle" });
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // Shown once, when the background script opens this page after install.
+  const [welcome, setWelcome] = useState(
+    () => new URLSearchParams(window.location.search).get("welcome") === "1",
+  );
   const [rules, setRules] = useState({ blocked: [] as string[], pinned: [] as string[] });
 
   useEffect(() => {
@@ -113,8 +117,11 @@ export function NewTab() {
     if (query) void run(query);
   }, [run]);
 
-  const openCard = useCallback((card: Card) => {
-    window.location.href = card.url;
+  // A result opens in a new Chrome tab, so the new-tab page (and the grid)
+  // stays where it is. ⌘/Ctrl- and middle-click open it in the background.
+  // chrome.tabs.create needs no permission beyond what the extension has.
+  const openCard = useCallback((card: Card, options?: { background?: boolean }) => {
+    void chrome.tabs.create({ url: card.url, active: !options?.background });
   }, []);
 
   useEffect(() => {
@@ -210,6 +217,24 @@ export function NewTab() {
       <main className="shell__inner" style={{ flex: 1 }}>
         {settingsOpen && <Settings onClose={() => setSettingsOpen(false)} />}
 
+        {view.status === "idle" && !settingsOpen && welcome && (
+          <aside className="ext-welcome">
+            <div>
+              <strong>Jasb is set up.</strong> This page is your new tab: type what you want, get
+              the right sites.
+              <ul>
+                <li>
+                  From anywhere, type <kbd>j</kbd> then <kbd>space</kbd> in Chrome's address bar.
+                </li>
+                <li>Your bookmarks and history show up in results, and never leave this browser.</li>
+                <li>Results open in a new tab; ⌘/Ctrl-click opens them in the background.</li>
+              </ul>
+            </div>
+            <button type="button" onClick={() => setWelcome(false)}>
+              Got it
+            </button>
+          </aside>
+        )}
         {view.status === "idle" && !settingsOpen && <EmptyState onPick={run} />}
 
         {view.status === "loading" && (
@@ -231,7 +256,12 @@ export function NewTab() {
 
         {view.status === "cards" && (
           <>
-            <StatusLine result={view.result} />
+            <StatusLine
+              result={view.result}
+              onOpenAll={() => {
+                for (const card of view.result.cards) openCard(card, { background: true });
+              }}
+            />
             {view.result.cards.length === 0 ? (
               <Notice
                 title="No sites came back for that"

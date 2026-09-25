@@ -23,6 +23,12 @@ files:
   - package.json
   - "!**/*.map"
 
+# Lets the OS offer Jasb as the default browser (Settings → Default browser).
+protocols:
+  - name: Web
+    schemes: [http, https]
+    role: Viewer
+
 # better-sqlite3 loads a .node binary, which cannot be read from inside asar.
 asarUnpack:
   - "**/*.node"
@@ -36,6 +42,12 @@ mac:
       arch: [arm64, x64]
   artifactName: Jasb-${version}-mac-${arch}.${ext}
   hardenedRuntime: true
+  # macOS lists an app as a browser only if it also opens HTML documents.
+  extendInfo:
+    CFBundleDocumentTypes:
+      - CFBundleTypeName: HTML document
+        CFBundleTypeRole: Viewer
+        LSItemContentTypes: [public.html, public.xhtml]
 
 win:
   target: nsis

@@ -31,7 +31,12 @@ export type IconName =
   | "chevron"
   | "grid"
   | "key"
-  | "trash";
+  | "trash"
+  | "flame"
+  | "cookie"
+  | "sparkle"
+  | "download"
+  | "power";
 
 export interface IconProps {
   name: IconName;
@@ -191,6 +196,43 @@ const PATHS: Record<IconName, React.ReactNode> = {
     <>
       <circle cx="8" cy="12" r="4" />
       <path d="M12 12h9M18 12v3.5M15.5 12v2.5" />
+    </>
+  ),
+
+  // The Fire button: burn this session's browsing data.
+  flame: (
+    <path d="M12 21c-3.9 0-7-2.8-7-6.6 0-2.9 1.9-4.7 3.4-6.4.3 1.6 1.2 2.7 2.2 3.1-.2-3.1 1.1-5.8 3.6-8.1.3 2.9 1.6 4.6 3 6.1 1.1 1.2 1.8 2.6 1.8 4.8 0 4-3 7.1-7 7.1z" />
+  ),
+
+  cookie: (
+    <>
+      <path d="M20.5 12.5A8.5 8.5 0 1 1 11.5 3.5a3 3 0 0 0 3.5 3.5 3 3 0 0 0 5.5 5.5z" />
+      <circle cx="8.5" cy="10" r="1" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="15.5" r="1" fill="currentColor" stroke="none" />
+      <circle cx="15.5" cy="12.5" r="1" fill="currentColor" stroke="none" />
+    </>
+  ),
+
+  // "Surprise me": a spark, not a magic wand.
+  sparkle: (
+    <>
+      <path d="M12 3v4M12 17v4M3 12h4M17 12h4" />
+      <path d="M6.3 6.3l2.5 2.5M15.2 15.2l2.5 2.5M17.7 6.3l-2.5 2.5M8.8 15.2l-2.5 2.5" />
+    </>
+  ),
+
+  download: (
+    <>
+      <path d="M12 4v11" />
+      <path d="M7 10.5l5 5 5-5" />
+      <path d="M5 20h14" />
+    </>
+  ),
+
+  power: (
+    <>
+      <path d="M12 3.5v8" />
+      <path d="M7.1 6.6a7.5 7.5 0 1 0 9.8 0" />
     </>
   ),
 

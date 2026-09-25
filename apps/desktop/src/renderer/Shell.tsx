@@ -14,6 +14,10 @@ import {
 
 import { TabStrip } from "./TabStrip.tsx";
 import { DesktopSettings } from "./DesktopSettings.tsx";
+import { FirePanel } from "./FirePanel.tsx";
+import { ShieldPanel } from "./ShieldPanel.tsx";
+import { TipBanner, type TipId } from "./TipBanner.tsx";
+import { Welcome } from "./Welcome.tsx";
 import type { DesktopApi, ShellState } from "../shared/ipc.ts";
 
 declare global {
@@ -46,6 +50,34 @@ export function Shell() {
   });
   const [rules, setRules] = useState({ blocked: [] as string[], pinned: [] as string[] });
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // A panel that overlaps the page (shield, Fire). While one is open the
+  // chrome sits above the page, transparent except for the toolbar and panel.
+  const [overlay, setOverlay] = useState<"shield" | "fire" | null>(null);
+
+  const openOverlay = useCallback((kind: "shield" | "fire") => {
+    document.documentElement.classList.add("overlay");
+    setOverlay(kind);
+    void window.jasb.setOverlay(true);
+  }, []);
+
+  const closeOverlay = useCallback(() => {
+    document.documentElement.classList.remove("overlay");
+    setOverlay(null);
+    void window.jasb.setOverlay(false);
+  }, []);
+
+  // First run and the one-time tips that follow it.
+  const [welcomeDone, setWelcomeDone] = useState<boolean>();
+  const [tipsSeen, setTipsSeen] = useState<string[]>([]);
+  /** The page a tip was last dismissed on: the next tip waits for a new page. */
+  const [tipPage, setTipPage] = useState<string>();
+
+  useEffect(() => {
+    void window.jasb.getWelcome().then((state) => {
+      setWelcomeDone(state.done);
+      setTipsSeen(state.tipsSeen);
+    });
+  }, []);
   const [history, setHistory] = useState<{ query: string; at: number }[]>([]);
 
   useEffect(() => window.jasb.onShellState(setShell), []);
@@ -53,6 +85,23 @@ export function Shell() {
   // Back/forward availability comes from the page in front, not from our own
   // history, so the buttons have to read it off the shell state.
   const activeTab = shell.tabs.find((tab) => tab.id === shell.activeTabId);
+
+  const tip: TipId | undefined = (() => {
+    if (!welcomeDone || shell.showingCards || !activeTab || overlay || activeTab.loading) return undefined;
+    if (activeTab.url === tipPage) return undefined;
+    if (!tipsSeen.includes("trackers")) {
+      return activeTab.blockedCompanies.length > 0 && !activeTab.adblockPaused ? "trackers" : undefined;
+    }
+    if (!tipsSeen.includes("fire")) return "fire";
+    if (!tipsSeen.includes("done")) return "done";
+    return undefined;
+  })();
+
+  const dismissTip = (id: TipId) => {
+    setTipsSeen((seen) => [...seen, id]);
+    setTipPage(activeTab?.url);
+    void window.jasb.markTipSeen(id);
+  };
 
   useEffect(() => {
     void window.jasb.getRules().then(setRules);
@@ -109,8 +158,8 @@ export function Shell() {
     }
   }, []);
 
-  const openCard = useCallback((card: Card) => {
-    void window.jasb.openCard(card);
+  const openCard = useCallback((card: Card, options?: { background?: boolean }) => {
+    void window.jasb.openCard(card, options);
   }, []);
 
   // Browser-grade keyboard map. ⌘T, ⌘W, ⌘R, ⌘[ / ⌘] and 1–6 for cards.
@@ -268,12 +317,20 @@ export function Shell() {
                   activeTab.adblockPaused
                     ? "Ad blocking is paused on this site. Click to turn it back on."
                     : `${activeTab.blockedCount} ads and trackers blocked on this page. ` +
-                      "Click to pause blocking on this site if something looks broken."
+                      "Click for details, or to pause blocking if something looks broken."
                 }
-                pressed={!activeTab.adblockPaused}
-                onClick={() => void window.jasb.toggleAdblockForActiveSite()}
+                pressed={overlay === "shield"}
+                onClick={() => (overlay === "shield" ? closeOverlay() : openOverlay("shield"))}
               />
             )}
+            <IconButton
+              icon="flame"
+              label="Fire"
+              title="Close all tabs and clear browsing data"
+              pressed={overlay === "fire"}
+              onClick={() => (overlay === "fire" ? closeOverlay() : openOverlay("fire"))}
+              iconOnly
+            />
             <IconButton
               icon="settings"
               label="Settings"
@@ -288,7 +345,17 @@ export function Shell() {
       <main className="shell__inner" style={{ flex: 1, overflowY: "auto" }}>
         {settingsOpen && <DesktopSettings onClose={() => setSettingsOpen(false)} />}
 
-        {!settingsOpen && view.status === "idle" && (
+        {!settingsOpen && view.status === "idle" && welcomeDone === false && (
+          <Welcome
+            onFinish={({ search, openSettings }) => {
+              setWelcomeDone(true);
+              if (search) void run(search);
+              if (openSettings) setSettingsOpen(true);
+            }}
+          />
+        )}
+
+        {!settingsOpen && view.status === "idle" && welcomeDone && (
           <>
             <SupportNote />
             <EmptyState onPick={run} />
@@ -332,7 +399,12 @@ export function Shell() {
 
         {!settingsOpen && view.status === "cards" && (
           <>
-            <StatusLine result={view.result} />
+            <StatusLine
+              result={view.result}
+              onOpenAll={() => {
+                for (const card of view.result.cards) openCard(card, { background: true });
+              }}
+            />
             <ul className="grid">
               {view.result.cards.map((card, index) => (
                 <ResultCard
@@ -357,6 +429,31 @@ export function Shell() {
           />
         )}
       </main>
+
+      {tip && (
+        <TipBanner
+          tip={tip}
+          companies={activeTab?.blockedCompanies ?? []}
+          onDismiss={() => dismissTip(tip)}
+          onTryFire={() => {
+            dismissTip("fire");
+            openOverlay("fire");
+          }}
+        />
+      )}
+
+      {overlay === "shield" && <ShieldPanel onClose={closeOverlay} />}
+      {overlay === "fire" && (
+        <FirePanel
+          onClose={closeOverlay}
+          onBurned={() => {
+            closeOverlay();
+            setView({ status: "idle" });
+            setInput("");
+            setHistory([]);
+          }}
+        />
+      )}
     </div>
   );
 }

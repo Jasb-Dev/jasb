@@ -26,3 +26,4 @@ export {
   type LicensePlan,
 } from "./license.ts";
 export { LicenseNotice } from "./LicenseNotice.tsx";
+export { SURPRISES, randomSurprise } from "./surprise.ts";

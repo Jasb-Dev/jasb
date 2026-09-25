@@ -1,0 +1,44 @@
+/* The one-time welcome shown right after install. */
+.ext-welcome {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-5);
+  margin-top: var(--space-6);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--signal-line);
+  border-radius: var(--radius-lg);
+  background: var(--signal-soft);
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+
+.ext-welcome strong {
+  color: var(--ink);
+}
+
+.ext-welcome ul {
+  margin: var(--space-2) 0 0;
+  padding-left: 1.1em;
+}
+
+.ext-welcome kbd {
+  padding: 1px 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  background: var(--paper-raised);
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+}
+
+.ext-welcome button {
+  flex: none;
+  margin-inline-start: auto;
+  padding: var(--space-2) var(--space-4);
+  border: 0;
+  border-radius: 999px;
+  background: var(--signal);
+  color: var(--paper-raised);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}

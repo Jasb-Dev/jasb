@@ -15,7 +15,11 @@ export interface ResultCardProps {
   card: Card;
   /** 1-based position; doubles as the keyboard shortcut. */
   index: number;
-  onOpen(card: Card): void;
+  /**
+   * Opens the card in a new tab. `background` is set for ⌘/Ctrl-click and
+   * middle-click, so several results can be opened without leaving the grid.
+   */
+  onOpen(card: Card, options?: { background?: boolean }): void;
   onBlock(domain: string): void;
   onPin(domain: string): void;
 }
@@ -33,11 +37,17 @@ export function ResultCard({ card, index, onOpen, onBlock, onPin }: ResultCardPr
         className="card__link"
         href={card.url}
         onClick={(event) => {
-          // Let the browser handle modifier-clicks and middle-clicks so
-          // "open in a new tab" keeps working exactly as people expect.
-          if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
+          // Every client opens results in a new tab. The shell decides what a
+          // tab is (a Jasb tab, a Chrome tab, a browser window); the card only
+          // says whether the user wants to stay on the grid.
+          if (event.button !== 0) return;
           event.preventDefault();
-          onOpen(card);
+          onOpen(card, event.metaKey || event.ctrlKey ? { background: true } : undefined);
+        }}
+        onAuxClick={(event) => {
+          if (event.button !== 1) return;
+          event.preventDefault();
+          onOpen(card, { background: true });
         }}
       >
         <div className="card__preview">

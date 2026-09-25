@@ -289,6 +289,21 @@ function AdblockGroup() {
           <span className="field__label">Block ads and trackers</span>
         </label>
 
+        <label className="field field--inline">
+          <input
+            type="checkbox"
+            checked={state.cookiePopups}
+            onChange={async (event) => setState(await window.jasb.setCookiePopups(event.target.checked))}
+          />
+          <span className="field__label">
+            Decline cookie pop-ups for me
+            <span className="field__hint">
+              Clicks "reject" on consent banners (DuckDuckGo's open AutoConsent rules), so you
+              are not asked on every site and nothing extra is allowed to track you.
+            </span>
+          </span>
+        </label>
+
         <div className="rules">
           <span className="label">
             <Icon name="block" size={13} /> Paused on

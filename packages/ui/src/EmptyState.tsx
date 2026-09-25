@@ -1,3 +1,6 @@
+import { Icon } from "./Icon.tsx";
+import { randomSurprise } from "./surprise.ts";
+
 /**
  * The empty state — and the product's thesis.
  *
@@ -41,6 +44,11 @@ export function EmptyState({ onPick }: { onPick(example: string): void }) {
           description="Open a result from the keyboard. ⌘L or / returns you to the bar."
         />
       </ul>
+
+      <button type="button" className="empty__surprise" onClick={() => onPick(randomSurprise())}>
+        <Icon name="sparkle" size={14} />
+        Surprise me
+      </button>
     </section>
   );
 }

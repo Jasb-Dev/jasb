@@ -151,6 +151,21 @@
    claim is "we do less" has to show its work.
    ------------------------------------------------------------------------- */
 
+.status__action {
+  padding: 2px var(--space-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  cursor: pointer;
+}
+
+.status__action:hover {
+  border-color: var(--signal-line);
+  color: var(--signal);
+}
+
 .status {
   display: flex;
   flex-wrap: wrap;
@@ -958,4 +973,24 @@
   gap: var(--space-3);
   padding: var(--space-1) 0 var(--space-1) var(--space-2);
   border-top: 1px solid var(--line);
+}
+
+/* "Surprise me": the one playful control on an otherwise quiet page. */
+.empty__surprise {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--signal-line);
+  border-radius: 999px;
+  background: var(--signal-soft);
+  color: var(--signal);
+  font: inherit;
+  cursor: pointer;
+}
+
+.empty__surprise:hover {
+  background: var(--signal);
+  color: var(--paper-raised);
 }

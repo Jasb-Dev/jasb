@@ -36,6 +36,11 @@ export interface AdblockSettings {
   enabled: boolean;
   /** Sites the user has paused blocking on, because something broke. */
   pausedDomains: string[];
+  /**
+   * Decline cookie pop-ups automatically. Optional because settings saved
+   * before the feature existed lack it; absent means on.
+   */
+  cookiePopups?: boolean;
 }
 
 export interface CheckResult {

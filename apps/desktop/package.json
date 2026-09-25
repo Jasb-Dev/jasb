@@ -17,6 +17,7 @@
     "dist:linux": "bash scripts/package.sh --linux"
   },
   "dependencies": {
+    "@duckduckgo/autoconsent": "^16.42.0",
     "@ghostery/adblocker-electron": "^2.18.2",
     "@jasb/intent-engine": "workspace:*",
     "@jasb/ui": "workspace:*",

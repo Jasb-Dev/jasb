@@ -294,6 +294,19 @@ export class LocalStore {
       .all() as Favourite[];
   }
 
+  /** Adds favourites in bulk (bookmark import), skipping ones already saved. */
+  addFavourites(entries: Omit<Favourite, "at">[]): number {
+    const insert = this.#db.prepare(
+      "INSERT OR IGNORE INTO favourites (url, title, domain, at) VALUES (?, ?, ?, ?)",
+    );
+    const now = Date.now();
+    let added = 0;
+    this.#db.transaction(() => {
+      for (const entry of entries) added += insert.run(entry.url, entry.title, entry.domain, now).changes;
+    })();
+    return added;
+  }
+
   toggleFavourite(entry: Omit<Favourite, "at">): boolean {
     const existing = this.#db.prepare("SELECT url FROM favourites WHERE url = ?").get(entry.url);
     if (existing) {
@@ -307,6 +320,20 @@ export class LocalStore {
   }
 
   /** The one-button erase the privacy label promises. */
+  /**
+   * The Fire button: what this machine remembers about where you have been.
+   * Keys, licence, block/pin rules and settings stay; they are choices, not
+   * traces.
+   */
+  clearBrowsing(): void {
+    this.#db.exec(`
+      DELETE FROM cache;
+      DELETE FROM history;
+      DELETE FROM domain_signals;
+      VACUUM;
+    `);
+  }
+
   clearAll(): void {
     this.#db.exec(`
       DELETE FROM cache;

@@ -14,8 +14,9 @@ import { BaseWindow, WebContentsView, type Session } from "electron";
 import { domainOf } from "@jasb/intent-engine";
 
 import type { Adblock } from "./adblock.ts";
+import { groupByCompany } from "./tracker-companies.ts";
 import type { LocalStore } from "./store.ts";
-import type { TabState } from "../shared/ipc.ts";
+import type { SiteReport, TabState } from "../shared/ipc.ts";
 
 /** Height reserved for the intent bar and tab strip. */
 export const CHROME_HEIGHT = 96;
@@ -31,6 +32,12 @@ interface Tab {
   blockedCount: number;
   /** Hosts already counted for this page load, so one CDN counts once. */
   countedHosts: Set<string>;
+  /** Blocked requests per host, for the shield panel. */
+  blockedHosts: Map<string, number>;
+  /** Third-party requests that were allowed to load, per host. */
+  loadedHosts: Map<string, number>;
+  /** Cookie consent pop-up handled on this page (CMP name), if any. */
+  cookiePopup: string | undefined;
   navigationStartedAt: number;
   loadFinishedAt: number | undefined;
   currentDomain: string;
@@ -50,6 +57,10 @@ export class TabManager {
   #activeId: number | undefined;
   #nextId = 1;
   #cardsVisible = true;
+  /** Extra height above the page for a tip banner (0 when none is showing). */
+  #bannerHeight = 0;
+  /** Pending coalesced state update: counts change hundreds of times a page. */
+  #changeTimer: ReturnType<typeof setTimeout> | undefined;
 
   constructor(options: {
     window: BaseWindow;
@@ -90,6 +101,9 @@ export class TabManager {
           canGoForward: contents.navigationHistory.canGoForward(),
           trackerCount: tab.trackerCount,
           blockedCount: tab.blockedCount,
+          blockedCompanies: groupByCompany(tab.blockedHosts)
+            .filter((group) => group.known)
+            .map((group) => group.name),
           adblockPaused: this.#adblock?.isPaused(tab.currentDomain) ?? false,
           ...(tab.favicon ? { favicon: tab.favicon } : {}),
         },
@@ -97,7 +111,11 @@ export class TabManager {
     });
   }
 
-  open(url?: string): number {
+  /**
+   * Opens a tab. A background tab loads without taking focus or hiding the
+   * card grid, so several results can be opened in a row.
+   */
+  open(url?: string, options: { background?: boolean } = {}): number {
     const id = this.#nextId++;
     const view = new WebContentsView({
       webPreferences: {
@@ -117,6 +135,9 @@ export class TabManager {
       trackerCount: 0,
       blockedCount: 0,
       countedHosts: new Set(),
+      blockedHosts: new Map(),
+      loadedHosts: new Map(),
+      cookiePopup: undefined,
       navigationStartedAt: Date.now(),
       loadFinishedAt: undefined,
       currentDomain: "",
@@ -129,7 +150,16 @@ export class TabManager {
     this.#order.push(id);
 
     if (url) void view.webContents.loadURL(url);
-    this.select(id);
+    if (options.background && this.#activeId !== undefined) {
+      this.#onChange();
+    } else if (options.background) {
+      // Nothing to stay on but the grid: remember this tab as the one a
+      // click on "Results → tab" returns to, without showing it yet.
+      this.#activeId = id;
+      this.#onChange();
+    } else {
+      this.select(id);
+    }
     return id;
   }
 
@@ -218,12 +248,41 @@ export class TabManager {
     const tab = this.#active();
     if (!tab) return;
     const { width, height } = this.#window.getContentBounds();
-    tab.view.setBounds({
-      x: 0,
-      y: CHROME_HEIGHT,
-      width,
-      height: Math.max(0, height - CHROME_HEIGHT),
-    });
+    const top = CHROME_HEIGHT + this.#bannerHeight;
+    tab.view.setBounds({ x: 0, y: top, width, height: Math.max(0, height - top) });
+  }
+
+  /**
+   * Pushes the page down to make room for a tip banner drawn by the chrome,
+   * the way DuckDuckGo's onboarding tips sit between toolbar and page.
+   */
+  setBannerHeight(px: number): void {
+    this.#bannerHeight = Math.max(0, Math.round(px));
+    this.layout();
+  }
+
+  /**
+   * Brings the page back in front of the chrome after an overlay (the shield
+   * panel, the Fire confirmation) closes. No-op while the grid is showing.
+   */
+  raiseActive(): void {
+    const tab = this.#active();
+    if (!tab || this.#cardsVisible) return;
+    this.#window.contentView.addChildView(tab.view);
+    this.layout();
+  }
+
+  /** Closes every tab without recording visits: used by the Fire button. */
+  burnAll(): void {
+    for (const tab of this.#tabs.values()) {
+      this.#window.contentView.removeChildView(tab.view);
+      tab.view.webContents.close();
+    }
+    this.#tabs.clear();
+    this.#order = [];
+    this.#activeId = undefined;
+    this.#cardsVisible = true;
+    this.#onChange();
   }
 
   disposeAll(): void {
@@ -251,6 +310,9 @@ export class TabManager {
       tab.loadFinishedAt = undefined;
       tab.trackerCount = 0;
       tab.blockedCount = 0;
+      tab.blockedHosts.clear();
+      tab.loadedHosts.clear();
+      tab.cookiePopup = undefined;
       tab.countedHosts.clear();
       tab.currentDomain = domainOf(event.url);
       this.#onChange();
@@ -314,8 +376,17 @@ export class TabManager {
           tab.trackerCount += 1;
           this.#onChange();
         }
+        const stopped = Boolean(verdict?.cancel || verdict?.redirectURL);
         // A retry loop would otherwise inflate the badge into the thousands.
-        if ((verdict?.cancel || verdict?.redirectURL) && !verdict.delayMs) tab.blockedCount += 1;
+        if (stopped && !verdict?.delayMs) {
+          tab.blockedCount += 1;
+          this.#changeSoon();
+          if (requestDomain) {
+            tab.blockedHosts.set(requestDomain, (tab.blockedHosts.get(requestDomain) ?? 0) + 1);
+          }
+        } else if (!stopped && thirdParty && requestDomain) {
+          tab.loadedHosts.set(requestDomain, (tab.loadedHosts.get(requestDomain) ?? 0) + 1);
+        }
       }
 
       if (verdict?.redirectURL) callback({ redirectURL: verdict.redirectURL });
@@ -323,6 +394,39 @@ export class TabManager {
         setTimeout(() => callback({ cancel: true }), verdict.delayMs);
       } else callback({ cancel: verdict?.cancel ?? false });
     });
+  }
+
+  /** Publishes state at most every 400 ms while counters are moving. */
+  #changeSoon(): void {
+    if (this.#changeTimer) return;
+    this.#changeTimer = setTimeout(() => {
+      this.#changeTimer = undefined;
+      this.#onChange();
+    }, 400);
+  }
+
+  /** What the shield panel shows for the active tab. */
+  siteReport(): SiteReport | undefined {
+    const tab = this.#active();
+    if (!tab || !tab.currentDomain) return undefined;
+    const url = tab.view.webContents.getURL();
+    return {
+      domain: tab.currentDomain,
+      secure: url.startsWith("https:"),
+      paused: this.#adblock?.isPaused(tab.currentDomain) ?? false,
+      blockedCount: tab.blockedCount,
+      blocked: groupByCompany(tab.blockedHosts),
+      loaded: groupByCompany(tab.loadedHosts),
+      ...(tab.cookiePopup ? { cookiePopup: tab.cookiePopup } : {}),
+    };
+  }
+
+  /** Records that a cookie pop-up was answered on the page in `webContentsId`. */
+  noteCookiePopup(webContentsId: number, cmp: string): void {
+    const tab = [...this.#tabs.values()].find((candidate) => candidate.view.webContents.id === webContentsId);
+    if (!tab) return;
+    tab.cookiePopup = cmp;
+    this.#onChange();
   }
 
   /** Reloads the active tab, e.g. after blocking was paused for its site. */

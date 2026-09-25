@@ -123,7 +123,9 @@ export function App() {
     [],
   );
 
-  const openCard = useCallback((card: Card) => {
+  // A web page cannot open a background tab; the browser decides focus. No
+  // "open all" here either: popup blockers allow one window per click.
+  const openCard = useCallback((card: Card, _options?: { background?: boolean }) => {
     window.open(card.url, "_blank", "noopener,noreferrer");
   }, []);
 
