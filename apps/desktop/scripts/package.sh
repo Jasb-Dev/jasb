@@ -32,6 +32,13 @@ pnpm --filter @jasb/desktop deploy --prod --legacy --ignore-scripts "$STAGE" >/d
 # electron-builder which runtime to download instead.
 ELECTRON_VERSION="$(node -p "require('$(native "$DESKTOP")/node_modules/electron/package.json').version")"
 
+# CI passes signing secrets through even when they are not set, as empty
+# strings. electron-builder reads an empty CSC_LINK as a path (the current
+# directory) and fails; unset empty ones so "no certificate" means unsigned.
+for name in CSC_LINK CSC_KEY_PASSWORD APPLE_ID APPLE_APP_SPECIFIC_PASSWORD APPLE_TEAM_ID; do
+  if [[ -z "${!name:-}" ]]; then unset "$name"; fi
+done
+
 # Without an explicit certificate, don't let electron-builder pick whatever is
 # in the keychain: an "Apple Development" identity signs the app but Gatekeeper
 # still blocks it on other machines, which is worse than an honest unsigned build.
