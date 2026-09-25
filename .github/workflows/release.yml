@@ -32,7 +32,10 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
+      # No install scripts: the only native module, better-sqlite3, ships
+      # N-API binaries for every platform inside its package, so nothing needs
+      # compiling (and compiling needs toolchains the runners lack).
+      - run: pnpm install --frozen-lockfile --ignore-scripts
       - name: Package
         shell: bash
         run: pnpm --filter @jasb/desktop run dist:${{ matrix.platform }}

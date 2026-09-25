@@ -24,7 +24,9 @@ pnpm --filter @jasb/intent-engine build >/dev/null
 pnpm --filter @jasb/desktop build >/dev/null
 
 rm -rf "$STAGE"
-pnpm --filter @jasb/desktop deploy --prod --legacy "$STAGE" >/dev/null
+# --ignore-scripts: nothing needs compiling. better-sqlite3 carries N-API
+# binaries for every platform (see electron-builder.yml, npmRebuild: false).
+pnpm --filter @jasb/desktop deploy --prod --legacy --ignore-scripts "$STAGE" >/dev/null
 
 # Electron itself is a dev dependency, so the stage does not have it. Tell
 # electron-builder which runtime to download instead.

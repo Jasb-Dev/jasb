@@ -29,6 +29,12 @@ protocols:
     schemes: [http, https]
     role: Viewer
 
+# better-sqlite3 13 ships N-API binaries for every platform in its package and
+# loads the right one itself. N-API is ABI-stable across Node and Electron, so
+# there is nothing to rebuild; rebuilding would need a C++ toolchain on every
+# build machine for no gain.
+npmRebuild: false
+
 # better-sqlite3 loads a .node binary, which cannot be read from inside asar.
 asarUnpack:
   - "**/*.node"
