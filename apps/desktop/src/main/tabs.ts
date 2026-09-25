@@ -13,6 +13,7 @@ import { BaseWindow, WebContentsView, type Session } from "electron";
 
 import { domainOf } from "@jasb/intent-engine";
 
+import type { Adblock } from "./adblock.ts";
 import type { LocalStore } from "./store.ts";
 import type { TabState } from "../shared/ipc.ts";
 
@@ -26,6 +27,8 @@ interface Tab {
   id: number;
   view: WebContentsView;
   trackerCount: number;
+  /** Requests the blocker stopped on this page load. */
+  blockedCount: number;
   /** Hosts already counted for this page load, so one CDN counts once. */
   countedHosts: Set<string>;
   navigationStartedAt: number;
@@ -39,6 +42,7 @@ export class TabManager {
   #window: BaseWindow;
   #store: LocalStore;
   #session: Session;
+  #adblock: Adblock | undefined;
   #onChange: () => void;
 
   #tabs = new Map<number, Tab>();
@@ -51,11 +55,13 @@ export class TabManager {
     window: BaseWindow;
     store: LocalStore;
     session: Session;
+    adblock?: Adblock;
     onChange: () => void;
   }) {
     this.#window = options.window;
     this.#store = options.store;
     this.#session = options.session;
+    this.#adblock = options.adblock;
     this.#onChange = options.onChange;
 
     this.#installTrackerCounter();
@@ -83,6 +89,8 @@ export class TabManager {
           canGoBack: contents.navigationHistory.canGoBack(),
           canGoForward: contents.navigationHistory.canGoForward(),
           trackerCount: tab.trackerCount,
+          blockedCount: tab.blockedCount,
+          adblockPaused: this.#adblock?.isPaused(tab.currentDomain) ?? false,
           ...(tab.favicon ? { favicon: tab.favicon } : {}),
         },
       ];
@@ -107,6 +115,7 @@ export class TabManager {
       id,
       view,
       trackerCount: 0,
+      blockedCount: 0,
       countedHosts: new Set(),
       navigationStartedAt: Date.now(),
       loadFinishedAt: undefined,
@@ -241,6 +250,7 @@ export class TabManager {
       tab.navigationStartedAt = Date.now();
       tab.loadFinishedAt = undefined;
       tab.trackerCount = 0;
+      tab.blockedCount = 0;
       tab.countedHosts.clear();
       tab.currentDomain = domainOf(event.url);
       this.#onChange();
@@ -273,34 +283,58 @@ export class TabManager {
   }
 
   /**
-   * Counts third-party requests per tab.
+   * The session's single request hook: blocks and measures in one place.
    *
-   * "Third party" here means a different registrable domain from the page
-   * itself, counted once per host. That is a rough proxy for a tracker rather
-   * than a blocklist match — but it is measured on the page the user actually
-   * loaded, today, which is worth more than a stale list.
+   * Electron allows one `onBeforeRequest` listener per session, so the ad
+   * blocker is consulted from here rather than installing its own.
+   *
+   * The tracker count is the number of distinct hosts on the page that match
+   * a filter list, whether or not blocking is on for this site, so a paused
+   * site still reports honestly. Before the lists have loaded (the first
+   * seconds of the very first launch) it falls back to counting third-party
+   * hosts, a rougher proxy.
    */
   #installTrackerCounter(): void {
     this.#session.webRequest.onBeforeRequest((details, callback) => {
       const tab = [...this.#tabs.values()].find(
         (candidate) => candidate.view.webContents.id === details.webContentsId,
       );
+      const verdict = this.#adblock?.check(details, tab?.currentDomain);
 
       if (tab && tab.currentDomain) {
         const requestDomain = domainOf(details.url);
-        if (
+        const thirdParty =
           requestDomain &&
           requestDomain !== tab.currentDomain &&
-          !requestDomain.endsWith(`.${tab.currentDomain}`) &&
-          !tab.countedHosts.has(requestDomain)
-        ) {
+          !requestDomain.endsWith(`.${tab.currentDomain}`);
+        const countsAsTracker = this.#adblock?.ready ? verdict?.matched : thirdParty;
+
+        if (requestDomain && countsAsTracker && !tab.countedHosts.has(requestDomain)) {
           tab.countedHosts.add(requestDomain);
           tab.trackerCount += 1;
+          this.#onChange();
         }
+        // A retry loop would otherwise inflate the badge into the thousands.
+        if ((verdict?.cancel || verdict?.redirectURL) && !verdict.delayMs) tab.blockedCount += 1;
       }
 
-      callback({ cancel: false });
+      if (verdict?.redirectURL) callback({ redirectURL: verdict.redirectURL });
+      else if (verdict?.cancel && verdict.delayMs > 0) {
+        setTimeout(() => callback({ cancel: true }), verdict.delayMs);
+      } else callback({ cancel: verdict?.cancel ?? false });
     });
+  }
+
+  /** Reloads the active tab, e.g. after blocking was paused for its site. */
+  reloadActive(): void {
+    const tab = this.#activeId === undefined ? undefined : this.#tabs.get(this.#activeId);
+    tab?.view.webContents.reload();
+  }
+
+  /** The site in the active tab, for "pause blocking on this site". */
+  get activeDomain(): string | undefined {
+    const tab = this.#activeId === undefined ? undefined : this.#tabs.get(this.#activeId);
+    return tab?.currentDomain || undefined;
   }
 
   /** Writes the finished measurement into the local quality table. */

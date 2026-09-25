@@ -16,8 +16,12 @@ export interface TabState {
   loading: boolean;
   canGoBack: boolean;
   canGoForward: boolean;
-  /** Third-party requests counted on this page so far. */
+  /** Distinct tracker hosts on this page (filter-list matches). */
   trackerCount: number;
+  /** Requests the ad blocker stopped on this page. */
+  blockedCount: number;
+  /** Blocking is paused for this tab's site. */
+  adblockPaused: boolean;
   favicon?: string;
 }
 
@@ -42,6 +46,13 @@ export interface ByokSettings {
   llmModel?: string;
   braveApiKey?: string;
   searxngUrl?: string;
+}
+
+export interface AdblockState {
+  enabled: boolean;
+  pausedDomains: string[];
+  /** False until the filter lists have loaded. */
+  ready: boolean;
 }
 
 export interface HistoryEntry {
@@ -87,6 +98,12 @@ export interface DesktopApi {
   getByokStatus(): Promise<Record<keyof ByokSettings, boolean>>;
   setByok(settings: ByokSettings): Promise<void>;
 
+  getAdblock(): Promise<AdblockState>;
+  setAdblockEnabled(enabled: boolean): Promise<AdblockState>;
+  /** Pauses or resumes blocking on the active tab's site, then reloads it. */
+  toggleAdblockForActiveSite(): Promise<AdblockState>;
+  resumeAdblockFor(domain: string): Promise<AdblockState>;
+
   onShellState(listener: (state: ShellState) => void): () => void;
 }
 
@@ -112,5 +129,9 @@ export const CHANNELS = {
   clearAllData: "jasb:clear-all-data",
   getByokStatus: "jasb:get-byok-status",
   setByok: "jasb:set-byok",
+  getAdblock: "jasb:get-adblock",
+  setAdblockEnabled: "jasb:set-adblock-enabled",
+  toggleAdblockForActiveSite: "jasb:toggle-adblock-site",
+  resumeAdblockFor: "jasb:resume-adblock-for",
   shellState: "jasb:shell-state",
 } as const;

@@ -251,6 +251,24 @@ export function Shell() {
               disabled={shell.showingCards}
               iconOnly
             />
+            {!shell.showingCards && activeTab && (
+              <IconButton
+                icon="shield"
+                label={
+                  activeTab.adblockPaused
+                    ? "Blocking paused"
+                    : `${activeTab.blockedCount} blocked`
+                }
+                title={
+                  activeTab.adblockPaused
+                    ? "Ad blocking is paused on this site. Click to turn it back on."
+                    : `${activeTab.blockedCount} ads and trackers blocked on this page. ` +
+                      "Click to pause blocking on this site if something looks broken."
+                }
+                pressed={!activeTab.adblockPaused}
+                onClick={() => void window.jasb.toggleAdblockForActiveSite()}
+              />
+            )}
             <IconButton
               icon="settings"
               label="Settings"

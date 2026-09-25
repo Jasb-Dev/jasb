@@ -17,19 +17,20 @@
     "dist:linux": "bash scripts/package.sh --linux"
   },
   "dependencies": {
+    "@ghostery/adblocker-electron": "^2.18.2",
     "@jasb/intent-engine": "workspace:*",
     "@jasb/ui": "workspace:*",
-    "better-sqlite3": "^11.7.0",
+    "better-sqlite3": "^13.0.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@electron/rebuild": "^3.7.1",
-    "@types/better-sqlite3": "^7.6.12",
+    "@types/better-sqlite3": "^9.6.0",
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",
     "@vitejs/plugin-react": "^4.3.4",
-    "electron": "^33.2.1",
+    "electron": "^44.4.5",
     "electron-builder": "^25.1.8",
     "typescript": "^5.7.2",
     "vite": "^6.0.5"

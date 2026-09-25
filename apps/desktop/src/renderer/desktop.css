@@ -167,3 +167,17 @@ body {
   background: var(--paper-raised);
   color: var(--ink);
 }
+
+/* A checkbox and its label on one line. */
+.field--inline {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  cursor: pointer;
+}
+
+.field--inline input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--signal);
+}

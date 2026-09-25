@@ -38,6 +38,11 @@ const api: DesktopApi = {
   getByokStatus: () => ipcRenderer.invoke(CHANNELS.getByokStatus),
   setByok: (settings) => ipcRenderer.invoke(CHANNELS.setByok, settings),
 
+  getAdblock: () => ipcRenderer.invoke(CHANNELS.getAdblock),
+  setAdblockEnabled: (enabled) => ipcRenderer.invoke(CHANNELS.setAdblockEnabled, enabled),
+  toggleAdblockForActiveSite: () => ipcRenderer.invoke(CHANNELS.toggleAdblockForActiveSite),
+  resumeAdblockFor: (domain) => ipcRenderer.invoke(CHANNELS.resumeAdblockFor, domain),
+
   onShellState: (listener) => {
     const handler = (_event: unknown, state: ShellState) => listener(state);
     ipcRenderer.on(CHANNELS.shellState, handler);
@@ -47,4 +52,4 @@ const api: DesktopApi = {
   },
 };
 
-contextBridge.exposeInMainWorld("jab", api);
+contextBridge.exposeInMainWorld("jasb", api);

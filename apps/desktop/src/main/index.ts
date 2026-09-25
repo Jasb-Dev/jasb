@@ -21,11 +21,18 @@ import {
 
 import type { Card, IntentEngine, ResolveResult } from "@jasb/intent-engine";
 
+import { Adblock, type AdblockSettings } from "./adblock.ts";
 import { buildEngine } from "./engine.ts";
 import { KeyVault } from "./keys.ts";
 import { LocalStore } from "./store.ts";
 import { CHROME_HEIGHT, TabManager } from "./tabs.ts";
-import { CHANNELS, type ByokSettings, type Favourite, type ShellState } from "../shared/ipc.ts";
+import {
+  CHANNELS,
+  type AdblockState,
+  type ByokSettings,
+  type Favourite,
+  type ShellState,
+} from "../shared/ipc.ts";
 
 // Without this, `app.getPath("userData")` is derived from the package name and
 // the database lands in a literal "@jasb/desktop" directory. Set before any path
@@ -41,6 +48,11 @@ let tabs: TabManager | undefined;
 let store: LocalStore | undefined;
 let vault: KeyVault | undefined;
 let engine: IntentEngine | undefined;
+let adblock: Adblock | undefined;
+
+const ADBLOCK_KEY = "adblock";
+/** On by default: a browser that promises clean pages should deliver them. */
+const ADBLOCK_DEFAULT: AdblockSettings = { enabled: true, pausedDomains: [] };
 
 function publishState(): void {
   if (!chrome || !tabs) return;
@@ -85,10 +97,22 @@ function createWindow(): void {
   // site can never be read by our own UI.
   const pageSession = session.fromPartition("persist:pages");
 
+  adblock = new Adblock(pageSession, store.setting(ADBLOCK_KEY, ADBLOCK_DEFAULT));
+  // In the background: pages load normally until the lists are ready.
+  adblock
+    .load(join(app.getPath("userData"), "adblock-engine.bin"))
+    .then(publishState)
+    .catch((error: unknown) => {
+      // Offline on first launch, or Ghostery's CDN unreachable. Browsing still
+      // works; blocking starts on the next launch that can fetch the lists.
+      console.warn("ad blocker unavailable:", error);
+    });
+
   tabs = new TabManager({
     window,
     store,
     session: pageSession,
+    adblock,
     onChange: publishState,
   });
 
@@ -191,6 +215,7 @@ handle(CHANNELS.toggleFavourite, async (_event, entry: Omit<Favourite, "at">) =>
 
 handle(CHANNELS.clearAllData, async () => {
   store?.clearAll();
+  adblock?.update(ADBLOCK_DEFAULT);
   vault?.clear();
   // Rebuild the engine so the cleared cache and keys take effect immediately
   // rather than after a restart.
@@ -201,6 +226,49 @@ handle(CHANNELS.getByokStatus, async () => vault?.status() ?? {});
 handle(CHANNELS.setByok, async (_event, settings: ByokSettings) => {
   vault?.write(settings);
   if (vault && store) engine = buildEngine(vault, store);
+});
+
+function adblockState(): AdblockState {
+  const settings = adblock?.settings ?? ADBLOCK_DEFAULT;
+  return { ...settings, ready: adblock?.ready ?? false };
+}
+
+function saveAdblock(settings: AdblockSettings): AdblockState {
+  adblock?.update(settings);
+  store?.setSetting(ADBLOCK_KEY, settings);
+  publishState();
+  return adblockState();
+}
+
+handle(CHANNELS.getAdblock, async () => adblockState());
+
+handle(CHANNELS.setAdblockEnabled, async (_event, enabled: boolean) => {
+  const state = saveAdblock({ ...adblockState(), enabled });
+  tabs?.reloadActive();
+  return state;
+});
+
+handle(CHANNELS.toggleAdblockForActiveSite, async () => {
+  const domain = tabs?.activeDomain;
+  const current = adblockState();
+  if (!domain) return current;
+  const paused = current.pausedDomains.includes(domain);
+  const state = saveAdblock({
+    enabled: current.enabled,
+    pausedDomains: paused
+      ? current.pausedDomains.filter((entry) => entry !== domain)
+      : [...current.pausedDomains, domain].sort(),
+  });
+  tabs?.reloadActive();
+  return state;
+});
+
+handle(CHANNELS.resumeAdblockFor, async (_event, domain: string) => {
+  const current = adblockState();
+  return saveAdblock({
+    enabled: current.enabled,
+    pausedDomains: current.pausedDomains.filter((entry) => entry !== domain),
+  });
 });
 
 // ---------------------------------------------------------------------------

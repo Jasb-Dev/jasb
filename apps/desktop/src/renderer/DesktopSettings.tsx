@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Icon, IconButton } from "@jasb/ui";
 
-import type { ByokSettings } from "../shared/ipc.ts";
+import type { AdblockState, ByokSettings } from "../shared/ipc.ts";
 
 /**
  * Desktop settings.
@@ -140,6 +140,8 @@ export function DesktopSettings({ onClose }: { onClose(): void }) {
         )}
       </section>
 
+      <AdblockGroup />
+
       <section className="settings__group">
         <h3 className="settings__grouptitle">
           <Icon name="trash" />
@@ -162,6 +164,72 @@ export function DesktopSettings({ onClose }: { onClose(): void }) {
           <span>Erase everything, including saved keys</span>
         </button>
       </section>
+    </section>
+  );
+}
+
+/**
+ * Ad and tracker blocking: one switch, and the sites it is paused on. Pausing
+ * happens from the shield in the toolbar, where the breakage is noticed; this
+ * list is where it is undone.
+ */
+function AdblockGroup() {
+  const [state, setState] = useState<AdblockState>();
+
+  useEffect(() => {
+    void window.jasb.getAdblock().then(setState);
+  }, []);
+
+  if (!state) return null;
+
+  return (
+    <section className="settings__group">
+      <h3 className="settings__grouptitle">
+        <Icon name="shield" />
+        <span>Ads and trackers</span>
+      </h3>
+      <p className="settings__note">
+        Pages load without ads or tracking scripts, using the same open filter lists as uBlock
+        Origin and Ghostery (EasyList, EasyPrivacy), updated weekly. It runs inside the
+        browser itself, so Chrome's extension limits don't apply. Nothing about the pages you
+        visit is sent anywhere.
+        {!state.ready && " The lists are still downloading; blocking starts in a moment."}
+      </p>
+      <div className="settings__fields">
+        <label className="field field--inline">
+          <input
+            type="checkbox"
+            checked={state.enabled}
+            onChange={async (event) => setState(await window.jasb.setAdblockEnabled(event.target.checked))}
+          />
+          <span className="field__label">Block ads and trackers</span>
+        </label>
+
+        <div className="rules">
+          <span className="label">
+            <Icon name="block" size={13} /> Paused on
+          </span>
+          {state.pausedDomains.length === 0 ? (
+            <p className="settings__note">
+              No sites. If a page breaks, click the shield in the toolbar to pause blocking there.
+            </p>
+          ) : (
+            <ul className="rules__list">
+              {state.pausedDomains.map((domain) => (
+                <li key={domain} className="rules__item">
+                  <span className="mono">{domain}</span>
+                  <IconButton
+                    icon="close"
+                    label={`Resume blocking on ${domain}`}
+                    onClick={async () => setState(await window.jasb.resumeAdblockFor(domain))}
+                    iconOnly
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
     </section>
   );
 }

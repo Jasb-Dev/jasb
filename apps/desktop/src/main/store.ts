@@ -58,6 +58,11 @@ export class LocalStore {
         kind   TEXT NOT NULL CHECK (kind IN ('blocked', 'pinned'))
       );
 
+      CREATE TABLE IF NOT EXISTS settings (
+        key   TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      );
+
       CREATE TABLE IF NOT EXISTS domain_signals (
         domain       TEXT PRIMARY KEY,
         trackers     INTEGER,
@@ -194,6 +199,30 @@ export class LocalStore {
     };
   }
 
+  // -------------------------------------------------------------------------
+  // Settings: small JSON values that belong to this device
+  // -------------------------------------------------------------------------
+
+  setting<T>(key: string, fallback: T): T {
+    const row = this.#db.prepare("SELECT value FROM settings WHERE key = ?").get(key) as
+      | { value: string }
+      | undefined;
+    if (!row) return fallback;
+    try {
+      return JSON.parse(row.value) as T;
+    } catch {
+      return fallback;
+    }
+  }
+
+  setSetting(key: string, value: unknown): void {
+    this.#db
+      .prepare(
+        "INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+      )
+      .run(key, JSON.stringify(value));
+  }
+
   rules(): Rules {
     const rows = this.#db.prepare("SELECT domain, kind FROM rules").all() as {
       domain: string;
@@ -285,6 +314,7 @@ export class LocalStore {
       DELETE FROM favourites;
       DELETE FROM rules;
       DELETE FROM domain_signals;
+      DELETE FROM settings;
       VACUUM;
     `);
   }

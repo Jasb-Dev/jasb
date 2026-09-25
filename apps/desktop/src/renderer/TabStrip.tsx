@@ -57,7 +57,11 @@ export function TabStrip({
               {tab.trackerCount > 0 && (
                 <span
                   className="tab__trackers"
-                  title={`${tab.trackerCount} third-party hosts contacted by this page`}
+                  title={
+                    tab.adblockPaused
+                      ? `${tab.trackerCount} tracker hosts on this page — blocking is paused here`
+                      : `${tab.trackerCount} tracker hosts on this page, ${tab.blockedCount} requests blocked`
+                  }
                 >
                   {tab.trackerCount}
                 </span>
